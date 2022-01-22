@@ -18,7 +18,6 @@ fun Application.configureRouting() {
 
     install(StatusPages) {} // TODO: this later?
 
-
     routing {
         get("/") {
             call.respondText("Hello World!")
