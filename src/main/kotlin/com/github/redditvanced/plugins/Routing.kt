@@ -2,6 +2,9 @@
 
 package com.github.redditvanced.plugins
 
+import com.github.redditvanced.database.RedditVersion
+import com.github.redditvanced.models.ResponseRedditVersion
+import com.github.redditvanced.models.respondError
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
@@ -10,6 +13,10 @@ import io.ktor.server.locations.*
 import io.ktor.server.plugins.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import org.jetbrains.exposed.sql.Op
+import org.jetbrains.exposed.sql.and
+import org.jetbrains.exposed.sql.select
+import org.jetbrains.exposed.sql.transactions.transaction
 
 fun Application.configureRouting() {
     install(Locations)
@@ -21,7 +28,10 @@ fun Application.configureRouting() {
         exception<Throwable> { call, err ->
             // TODO: log body
             log.error("An error occurred", err)
-            call.respondText("An error occurred. Please try again later.", status = HttpStatusCode.InternalServerError)
+            call.respondError(
+                "An internal error occurred. Please try again later.",
+                HttpStatusCode.InternalServerError
+            )
         }
     }
 
@@ -33,26 +43,24 @@ fun Application.configureRouting() {
         get("/") {
             call.respondText("Hello World!")
         }
-        get<MyLocation> {
-            call.respondText("Location: name=${it.name}, arg1=${it.arg1}, arg2=${it.arg2}")
-        }
-        get<Type.Edit> {
-            call.respondText("Inside $it")
-        }
-        get<Type.List> {
-            call.respondText("Inside $it")
+        get<RedditRoute> {
+            val op = when {
+                it.arch != null ->
+                    Op.build { RedditVersion.versionCode eq it.versionCode and (RedditVersion.architecture eq it.arch) }
+                else ->
+                    Op.build { RedditVersion.versionCode eq it.versionCode }
+            }
+            val version = transaction {
+                RedditVersion.select(op).limit(1).firstOrNull()
+            }
+
+            if (version == null)
+                call.respondError("Version does not exist!", HttpStatusCode.NotFound)
+            else
+                call.respond(ResponseRedditVersion.fromResultRow(version))
         }
     }
 }
 
-@Location("/location/{name}")
-class MyLocation(val name: String, val arg1: Int = 42, val arg2: String = "default")
-
-@Location("/type/{name}")
-data class Type(val name: String) {
-    @Location("/edit")
-    data class Edit(val type: Type)
-
-    @Location("/list/{page}")
-    data class List(val type: Type, val page: Int)
-}
+@Location("/reddit/{versionCode}")
+class RedditRoute(val versionCode: Int, val arch: String? = null)

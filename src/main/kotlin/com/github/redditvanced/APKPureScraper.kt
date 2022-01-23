@@ -31,7 +31,7 @@ object APKPureScraper {
             userAgent = "RedditVanced backend"
         }
 
-        val versions = mutableListOf<VersionGroup>()
+        val versions = mutableListOf<RawVersion>()
 
         val result = scrape()
         result.document.li {
@@ -42,7 +42,7 @@ object APKPureScraper {
             if (singleAPKInfo != null) {
                 val info = div { findFirst("ver-info-m") }
 
-                versions.add(VersionGroup(
+                versions.add(RawVersion(
                     sha1 = info.children[8].ownText,
                     version = singleAPKInfo.children[0].ownText,
                     arch = info.children[5].ownText,
@@ -75,7 +75,7 @@ object APKPureScraper {
         }
     }
 
-    data class VersionGroup(
+    data class RawVersion(
         val sha1: String,
         val version: String,
         val arch: String,
