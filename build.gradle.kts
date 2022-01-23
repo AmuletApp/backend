@@ -64,4 +64,16 @@ dependencies {
     // Migrations
     implementation("gay.solonovamax:exposed-migrations:4.0.1")
     implementation("ca.solo-studios:slf4k:0.4.6")
+
+    implementation("it.skrape:skrapeit:1.2.0") {
+        exclude("it.skrape", "skrapeit-async-fetcher")
+        exclude("it.skrape", "skrapeit-base-fetcher")
+        exclude("it.skrape", "skrapeit-http-fetcher")
+    }
+    implementation("it.skrape:skrapeit-async-fetcher:1.3.0")
+    implementation("it.skrape:skrapeit-base-fetcher:1.3.0")
+    implementation("it.skrape:skrapeit-http-fetcher:1.3.0")
+//    implementation("com.github.diamondminer88:skrapeit-async-fetcher:1.3.0")
+//    implementation("com.github.diamondminer88:skrapeit-base-fetcher:1.3.0")
+//    implementation("com.github.diamondminer88:skrapeit-http-fetcher:1.3.0")
 }
