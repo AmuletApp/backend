@@ -10,18 +10,22 @@ plugins {
     application
     kotlin("jvm") version "1.6.10"
     id("org.jetbrains.kotlin.plugin.serialization") version "1.6.10"
+    id("com.github.johnrengelman.shadow") version "5.2.0"
 }
 
 group = "com.github.redditvanced"
 version = "1.0.0"
 
 application {
-    mainClass.set("com.github.redditvanced.backend.ApplicationKt")
+    mainClassName = "com.github.redditvanced.ApplicationKt"
 }
 
 repositories {
+    mavenLocal()
     mavenCentral()
     maven("https://maven.pkg.jetbrains.space/public/p/ktor/eap")
+    maven("https://oss.sonatype.org/content/repositories/snapshots/")
+    maven("https://jitpack.io")
 }
 
 tasks.withType<KotlinCompile> {
@@ -54,6 +58,10 @@ dependencies {
     implementation("org.jetbrains.exposed:exposed-core:$exposedVersion")
     implementation("org.jetbrains.exposed:exposed-dao:$exposedVersion")
     implementation("org.jetbrains.exposed:exposed-jdbc:$exposedVersion")
+    implementation("org.jetbrains.exposed:exposed-java-time:$exposedVersion")
     implementation("org.xerial:sqlite-jdbc:3.36.0.3")
-    implementation("gay.solonovamax:exposed-migrations:4.0.0")
+
+    // Migrations
+    implementation("gay.solonovamax:exposed-migrations:4.0.1")
+    implementation("ca.solo-studios:slf4k:0.4.6")
 }
