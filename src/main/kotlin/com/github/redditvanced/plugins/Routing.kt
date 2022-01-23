@@ -5,6 +5,7 @@ package com.github.redditvanced.plugins
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
+import io.ktor.server.http.content.*
 import io.ktor.server.locations.*
 import io.ktor.server.plugins.*
 import io.ktor.server.response.*
@@ -25,6 +26,10 @@ fun Application.configureRouting() {
     }
 
     routing {
+        static {
+            resource("/robots.txt", "robots.txt")
+        }
+
         get("/") {
             call.respondText("Hello World!")
         }
