@@ -2,11 +2,11 @@
 
 package com.github.redditvanced.plugins
 
+import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.locations.*
 import io.ktor.server.plugins.*
-import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 
@@ -16,7 +16,13 @@ fun Application.configureRouting() {
         json()
     }
 
-    install(StatusPages) {} // TODO: this later?
+    install(StatusPages) {
+        exception<Throwable> { call, err ->
+            // TODO: log body
+            log.error("An error occurred", err)
+            call.respondText("An error occurred. Please try again later.", status = HttpStatusCode.InternalServerError)
+        }
+    }
 
     routing {
         get("/") {
