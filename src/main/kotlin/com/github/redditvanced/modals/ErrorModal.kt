@@ -1,4 +1,4 @@
-package com.github.redditvanced.models
+package com.github.redditvanced.modals
 
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -7,7 +7,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class ResponseError(
-    val message: String,
+    val error: String,
 )
 
 suspend fun ApplicationCall.respondError(msg: String, code: HttpStatusCode) =

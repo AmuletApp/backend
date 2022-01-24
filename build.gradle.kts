@@ -65,6 +65,10 @@ dependencies {
     implementation("gay.solonovamax:exposed-migrations:4.0.1")
     implementation("ca.solo-studios:slf4k:0.4.6")
 
+    // GPlay API
+    implementation("com.github.theapache64:google-play-api:0.0.9")
+    implementation("com.google.protobuf:protobuf-java:3.19.3")
+
     implementation("it.skrape:skrapeit:1.2.0") {
         exclude("it.skrape", "skrapeit-async-fetcher")
         exclude("it.skrape", "skrapeit-base-fetcher")

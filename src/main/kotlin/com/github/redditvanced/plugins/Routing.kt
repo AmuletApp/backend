@@ -2,15 +2,17 @@
 
 package com.github.redditvanced.plugins
 
+import com.github.redditvanced.GAccountHandler
 import com.github.redditvanced.database.RedditVersion
-import com.github.redditvanced.models.ResponseRedditVersion
-import com.github.redditvanced.models.respondError
+import com.github.redditvanced.modals.RedditVersionModal
+import com.github.redditvanced.modals.respondError
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
 import io.ktor.server.http.content.*
 import io.ktor.server.locations.*
 import io.ktor.server.plugins.*
+import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import org.jetbrains.exposed.sql.Op
@@ -20,13 +22,10 @@ import org.jetbrains.exposed.sql.transactions.transaction
 
 fun Application.configureRouting() {
     install(Locations)
-    install(ContentNegotiation) {
-        json()
-    }
+    install(ContentNegotiation) { json() }
 
     install(StatusPages) {
         exception<Throwable> { call, err ->
-            // TODO: log body
             log.error("An error occurred", err)
             call.respondError(
                 "An internal error occurred. Please try again later.",
@@ -57,7 +56,13 @@ fun Application.configureRouting() {
             if (version == null)
                 call.respondError("Version does not exist!", HttpStatusCode.NotFound)
             else
-                call.respond(ResponseRedditVersion.fromResultRow(version))
+                call.respond(RedditVersionModal.fromResultRow(version))
+        }
+
+        get("googleAccount") {
+            if (call.request.userAgent() != "RedditVanced Manager")
+                call.respond(HttpStatusCode.NotFound, "")
+            else call.respond(GAccountHandler.getAccountModal())
         }
     }
 }
