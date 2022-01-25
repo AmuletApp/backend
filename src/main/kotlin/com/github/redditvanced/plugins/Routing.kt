@@ -2,8 +2,8 @@
 
 package com.github.redditvanced.plugins
 
-import com.github.redditvanced.GAccountHandler
 import com.github.redditvanced.database.RedditVersion
+import com.github.redditvanced.modals.AccountCredentialsModel
 import com.github.redditvanced.modals.RedditVersionModal
 import com.github.redditvanced.modals.respondError
 import io.ktor.http.*
@@ -59,10 +59,19 @@ fun Application.configureRouting() {
                 call.respond(RedditVersionModal.fromResultRow(version))
         }
 
-        get("googleAccount") {
+//        get("googleAccount") {
+//            if (call.request.userAgent() != "RedditVanced Manager")
+//                call.respond(HttpStatusCode.NotFound, "")
+//            else call.respond(GAccountHandler.getAccountModal())
+//        }
+
+        get("google") {
             if (call.request.userAgent() != "RedditVanced Manager")
                 call.respond(HttpStatusCode.NotFound, "")
-            else call.respond(GAccountHandler.getAccountModal())
+            else call.respond(AccountCredentialsModel(
+                System.getenv("GOOGLE_EMAIL"),
+                System.getenv("GOOGLE_PASSWORD")
+            ))
         }
     }
 }
