@@ -34,12 +34,6 @@ fun Application.configureRouting() {
 			resource("/robots.txt", "robots.txt")
 		}
 
-		// get("googleAccount") {
-		// 	if (call.request.userAgent() != "RedditVanced")
-		// 		call.respond(HttpStatusCode.NotFound, "")
-		// 	else call.respond(GAccountHandler.getAccountModal())
-		// }
-
 		get("google") {
 			if (call.request.userAgent() != "RedditVanced")
 				call.respond(HttpStatusCode.NotFound, "")
