@@ -7,20 +7,20 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 
 object GAccountHandler {
-    private val email = System.getenv("GOOGLE_EMAIL")
-    private val password = System.getenv("GOOGLE_PASSWORD")
+	private val email = System.getenv("GOOGLE_EMAIL")
+	private val password = System.getenv("GOOGLE_PASSWORD")
 
-    private var account: Account? = null
-    private var loginTime = Instant.now()
+	private var account: Account? = null
+	private var loginTime = Instant.now()
 
-    private suspend fun getAccount(): Account {
-        if (account == null || loginTime.plus(12, ChronoUnit.HOURS) < Instant.now()) {
-            account = Play.login(email, password)
-            loginTime = Instant.now()
-        }
-        return account!!
-    }
+	private suspend fun getAccount(): Account {
+		if (account == null || loginTime.plus(12, ChronoUnit.HOURS) < Instant.now()) {
+			account = Play.login(email, password)
+			loginTime = Instant.now()
+		}
+		return account!!
+	}
 
-    suspend fun getAccountModal(): AccountModal =
-        getAccount().run { AccountModal(token, gsfId) }
+	suspend fun getAccountModal(): AccountModal =
+		getAccount().run { AccountModal(token, gsfId) }
 }

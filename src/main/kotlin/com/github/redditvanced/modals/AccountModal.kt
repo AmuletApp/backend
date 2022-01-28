@@ -4,6 +4,6 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class AccountModal(
-    val token: String,
-    val gsfId: String,
+	val token: String,
+	val gsfId: String,
 )

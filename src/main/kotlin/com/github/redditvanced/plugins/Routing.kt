@@ -12,40 +12,48 @@ import io.ktor.server.locations.*
 import io.ktor.server.plugins.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
-import io.ktor.server.routing.*
+import io.ktor.server.routing.get
+import io.ktor.server.routing.routing
 
 fun Application.configureRouting() {
-    install(Locations)
-    install(ContentNegotiation) { json() }
+	install(Locations)
+	install(ContentNegotiation) { json() }
 
-    install(StatusPages) {
-        exception<Throwable> { call, err ->
-            log.error("An error occurred", err)
-            call.respondError(
-                "An internal error occurred. Please try again later.",
-                HttpStatusCode.InternalServerError
-            )
-        }
-    }
+	install(StatusPages) {
+		exception<Throwable> { call, err ->
+			log.error("An error occurred", err)
+			call.respondError(
+				"An internal error occurred. Please try again later.",
+				HttpStatusCode.InternalServerError
+			)
+		}
+	}
 
-    routing {
-        static {
-            resource("/robots.txt", "robots.txt")
-        }
+	routing {
+		static {
+			resource("/robots.txt", "robots.txt")
+		}
 
-//        get("googleAccount") {
-//            if (call.request.userAgent() != "RedditVanced")
-//                call.respond(HttpStatusCode.NotFound, "")
-//            else call.respond(GAccountHandler.getAccountModal())
-//        }
+		// get("googleAccount") {
+		// 	if (call.request.userAgent() != "RedditVanced")
+		// 		call.respond(HttpStatusCode.NotFound, "")
+		// 	else call.respond(GAccountHandler.getAccountModal())
+		// }
 
-        get("google") {
-            if (call.request.userAgent() != "RedditVanced")
-                call.respond(HttpStatusCode.NotFound, "")
-            else call.respond(AccountCredentialsModel(
-                System.getenv("GOOGLE_EMAIL"),
-                System.getenv("GOOGLE_PASSWORD")
-            ))
-        }
-    }
+		get("google") {
+			if (call.request.userAgent() != "RedditVanced")
+				call.respond(HttpStatusCode.NotFound, "")
+			else call.respond(AccountCredentialsModel(
+				System.getenv("GOOGLE_EMAIL"),
+				System.getenv("GOOGLE_PASSWORD")
+			))
+		}
+
+		post<PublishPlugin> {
+
+		}
+	}
 }
+
+@Location("publishPlugin/{plugin}")
+data class PublishPlugin(val plugin: String)
