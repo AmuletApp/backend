@@ -18,8 +18,6 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
 import net.perfectdreams.discordinteraktions.verifier.InteractionRequestVerifier
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
@@ -27,7 +25,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 
 @OptIn(KtorExperimentalLocationsAPI::class)
 object PluginPublishing {
-	private val rest = RestClient(System.getenv("DISCORD_TOKEN"))
+	private val discord = RestClient(System.getenv("DISCORD_TOKEN"))
 	private val verifier = InteractionRequestVerifier(System.getenv("DISCORD_PUBLIC_KEY"))
 	private val verificationChannel = Snowflake(System.getenv("DISCORD_PUBLISHING_CHANNEL_ID"))
 	private val guildId = System.getenv("DISCORD_GUILD_ID")
@@ -99,7 +97,7 @@ object PluginPublishing {
 				val messageId = existingRequest[PublishRequest.messageId]
 				val message = if (messageId == null) null else {
 					try {
-						rest.channel.getMessage(verificationChannel, Snowflake(messageId))
+						discord.channel.getMessage(verificationChannel, Snowflake(messageId))
 					} catch (t: Throwable) {
 						null
 					}
@@ -145,8 +143,8 @@ object PluginPublishing {
 					}.value
 				}
 
-				// Send new message with publish request
-				val message = rest.channel.createMessage(verificationChannel) {
+				// Send new publish request message
+				val message = discord.channel.createMessage(verificationChannel) {
 					content = "Awaiting approval..."
 					embeds += buildRequestEmbed(data, 0, lastApprovedCommit, lastSharedCommit)
 					actionRow {
@@ -157,7 +155,7 @@ object PluginPublishing {
 				}
 				message.id.value
 			} else {
-				rest.channel.editMessage(verificationChannel, Snowflake(existingMessageId)) {
+				discord.channel.editMessage(verificationChannel, Snowflake(existingMessageId)) {
 					embeds = mutableListOf(buildRequestEmbed(
 						data,
 						existingRequest!![PublishRequest.updates],
@@ -168,9 +166,11 @@ object PluginPublishing {
 				existingMessageId
 			}
 
-			call.respond(buildJsonObject {
-				put("message", "Success! Link to message: https://discord.com/$guildId/$verificationChannel/$messageId")
-			})
+			@Serializable
+			data class Response(
+				val message: String,
+			)
+			call.respond(Response("Success! https://discord.com/$guildId/$verificationChannel/$messageId"))
 		}
 	}
 
@@ -204,25 +204,28 @@ object PluginPublishing {
 
 	private val btnIdRegex = "^publishRequest-(\\d+)-(approve|deny|noci)$".toRegex()
 	private fun handleComponentInteraction(interaction: DiscordInteraction): InteractionResponseCreateRequest {
-		val idMatch = btnIdRegex.find(interaction.data.customId.value!!)
 		val hasPermissions = interaction.member.value!!.roles
 			.map { it.value }
 			.any { it in allowedRoles }
 
+		val idParts = btnIdRegex.find(interaction.data.customId.value!!)
+
 		return if (!hasPermissions)
 			ephemeralResponse("You don't have sufficient permissions to approve this commit!")
-		else if (idMatch == null)
+		else if (idParts == null)
 			ephemeralResponse("Unknown button!")
 		else {
-			val (idStr, action) = idMatch.destructured
+			val (idStr, action) = idParts.destructured
 			val id = idStr.toInt()
 
 			if (action == "approve" && currentBuild != null)
-				return ephemeralResponse("There is current another plugin being built!\nPlease wait until that finishes in order to approve a build! (Queue is WIP)")
+				return ephemeralResponse("There is current another plugin being built!\nPlease wait until that finishes in order to approve a build!")
 
 			val publishRequest = transaction {
 				PublishRequest.select { PublishRequest.id eq id }.singleOrNull()
-			} ?: return ephemeralResponse("Unknown plugin publish request!")
+			}
+
+			publishRequest ?: return ephemeralResponse("Unknown plugin publish request!")
 
 			// TODO: finish this
 
