@@ -40,7 +40,7 @@ object PluginPublishing {
 
 	fun Application.configurePluginPublishing() = routing {
 		post("github") {
-			// GitHub webhook
+			// TODO: GitHub webhook
 		}
 
 		post("github/currentBuild") {
@@ -54,6 +54,7 @@ object PluginPublishing {
 			val signature = call.request.headers["X-Signature-Ed25519"]!!
 			val timestamp = call.request.headers["X-Signature-Timestamp"]!!
 
+			// Verify request is sent by Discord
 			val verified = verifier.verifyKey(call.receiveText(), signature, timestamp)
 			if (!verified) {
 				call.respondText("", ContentType.Application.Json, HttpStatusCode.Unauthorized)
@@ -62,6 +63,7 @@ object PluginPublishing {
 
 			val interaction = call.receive<DiscordInteraction>()
 
+			// Respond to the interaction
 			if (interaction.type == InteractionType.Ping)
 				call.respond(InteractionResponseCreateRequest(InteractionResponseType.Pong))
 			else if (interaction.type == InteractionType.Component && interaction.member.value != null)
@@ -87,6 +89,8 @@ object PluginPublishing {
 			// Check if request's message still present
 			val existingMessageId = if (existingRequest == null) null else {
 				val requestId = existingRequest[PublishRequest.id]
+
+				// Update the target commit to approve in DB and increment updates counter
 				transaction {
 					PublishRequest.update({ PublishRequest.id eq requestId }) {
 						it[targetCommit] = data.targetCommit
@@ -94,6 +98,7 @@ object PluginPublishing {
 					}
 				}
 
+				// Verify that message exists
 				val messageId = existingRequest[PublishRequest.messageId]
 				val message = if (messageId == null) null else {
 					try {
@@ -103,6 +108,8 @@ object PluginPublishing {
 					}
 				}
 
+				// Delete request if message gone
+				// This will go on to generate a new request
 				if (message == null) transaction {
 					PublishRequest.deleteWhere { PublishRequest.id eq requestId }
 					null
@@ -155,6 +162,7 @@ object PluginPublishing {
 				}
 				message.id.value
 			} else {
+				// Edit the existing publish request message with new details
 				discord.channel.editMessage(verificationChannel, Snowflake(existingMessageId)) {
 					embeds = mutableListOf(buildRequestEmbed(
 						data,
@@ -204,10 +212,12 @@ object PluginPublishing {
 
 	private val btnIdRegex = "^publishRequest-(\\d+)-(approve|deny|noci)$".toRegex()
 	private fun handleComponentInteraction(interaction: DiscordInteraction): InteractionResponseCreateRequest {
+		// Check if member has one of the "approve" roles
 		val hasPermissions = interaction.member.value!!.roles
 			.map { it.value }
 			.any { it in allowedRoles }
 
+		// Extract the button ID parts
 		val idParts = btnIdRegex.find(interaction.data.customId.value!!)
 
 		return if (!hasPermissions)
@@ -218,13 +228,18 @@ object PluginPublishing {
 			val (idStr, action) = idParts.destructured
 			val id = idStr.toInt()
 
+			// TODO: implement queue
+			// Deny approving plugins to build while another build is currently running.
+			// This is because workflows rely on the "/github/currentBuild" endpoint to get target plugin info.
 			if (action == "approve" && currentBuild != null)
 				return ephemeralResponse("There is current another plugin being built!\nPlease wait until that finishes in order to approve a build!")
 
+			// Get plugin request details
 			val publishRequest = transaction {
 				PublishRequest.select { PublishRequest.id eq id }.singleOrNull()
 			}
 
+			// Verify request still exists
 			publishRequest ?: return ephemeralResponse("Unknown plugin publish request!")
 
 			// TODO: finish this
