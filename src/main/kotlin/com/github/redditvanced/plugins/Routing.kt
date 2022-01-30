@@ -12,8 +12,7 @@ import io.ktor.server.locations.*
 import io.ktor.server.plugins.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
-import io.ktor.server.routing.get
-import io.ktor.server.routing.routing
+import io.ktor.server.routing.*
 
 fun Application.configureRouting() {
 	install(Locations)
@@ -42,12 +41,5 @@ fun Application.configureRouting() {
 				System.getenv("GOOGLE_PASSWORD")
 			))
 		}
-
-		post<PublishPlugin> {
-
-		}
 	}
 }
-
-@Location("publishPlugin/{plugin}")
-data class PublishPlugin(val plugin: String)

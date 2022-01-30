@@ -1,11 +1,5 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-val ktorVersion: String by project
-val kotlinVersion: String by project
-val logbackVersion: String by project
-val prometheusVersion: String by project
-val exposedVersion: String by project
-
 plugins {
 	application
 	kotlin("jvm") version "1.6.10"
@@ -16,25 +10,21 @@ plugins {
 group = "com.github.redditvanced"
 version = "1.0.0"
 
-application {
-	mainClassName = "com.github.redditvanced.ApplicationKt"
-}
-
 repositories {
-	mavenLocal()
 	mavenCentral()
 	maven("https://maven.pkg.jetbrains.space/public/p/ktor/eap")
 	maven("https://oss.sonatype.org/content/repositories/snapshots/")
+	maven("https://repo.perfectdreams.net/")
 	maven("https://jitpack.io")
 }
 
-tasks.withType<KotlinCompile> {
-	kotlinOptions {
-		freeCompilerArgs = freeCompilerArgs + "-opt-in=kotlin.RequiresOptIn"
-	}
-}
-
 dependencies {
+	val ktorVersion: String by project
+	val kotlinVersion: String by project
+	val logbackVersion: String by project
+	val prometheusVersion: String by project
+	val exposedVersion: String by project
+
 	// Ktor & logging
 	implementation("io.ktor:ktor-server-core:$ktorVersion")
 	implementation("io.ktor:ktor-server-netty:$ktorVersion")
@@ -46,13 +36,10 @@ dependencies {
 	implementation("io.ktor:ktor-server-status-pages:$ktorVersion")
 	implementation("io.ktor:ktor-server-call-logging:$ktorVersion")
 	implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
+	implementation("io.ktor:ktor-server-double-receive:$ktorVersion")
 	implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
 	implementation("io.ktor:ktor-server-metrics-micrometer:$ktorVersion")
 	implementation("io.micrometer:micrometer-registry-prometheus:$prometheusVersion")
-
-	// Ktor testing
-	testImplementation("io.ktor:ktor-server-tests:$ktorVersion")
-	testImplementation("org.jetbrains.kotlin:kotlin-test-junit:$kotlinVersion")
 
 	// Database
 	implementation("org.jetbrains.exposed:exposed-core:$exposedVersion")
@@ -69,15 +56,22 @@ dependencies {
 	implementation("com.github.theapache64:google-play-api:0.0.9")
 	implementation("com.google.protobuf:protobuf-java:3.19.3")
 
-	implementation("it.skrape:skrapeit:1.2.0") {
-		exclude("it.skrape", "skrapeit-async-fetcher")
-		exclude("it.skrape", "skrapeit-base-fetcher")
-		exclude("it.skrape", "skrapeit-http-fetcher")
+	// Kord
+	implementation("dev.kord:kord-rest:0.8.0-M8")
+	implementation("net.perfectdreams.discordinteraktions:requests-verifier:0.0.12-SNAPSHOT")
+}
+
+tasks.withType<KotlinCompile> {
+	kotlinOptions {
+		freeCompilerArgs = freeCompilerArgs + "-opt-in=kotlin.RequiresOptIn"
 	}
-	implementation("it.skrape:skrapeit-async-fetcher:1.3.0")
-	implementation("it.skrape:skrapeit-base-fetcher:1.3.0")
-	implementation("it.skrape:skrapeit-http-fetcher:1.3.0")
-//    implementation("com.github.diamondminer88:skrapeit-async-fetcher:1.3.0")
-//	implementation("com.github.diamondminer88:skrapeit-base-fetcher:1.3.0")
-//	implementation("com.github.diamondminer88:skrapeit-http-fetcher:1.3.0")
+}
+
+application {
+	mainClassName = "com.github.redditvanced.ApplicationKt"
+}
+
+java {
+	sourceCompatibility = JavaVersion.VERSION_17
+	targetCompatibility = JavaVersion.VERSION_17
 }
