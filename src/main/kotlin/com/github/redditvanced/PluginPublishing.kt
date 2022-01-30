@@ -5,8 +5,8 @@ import com.github.redditvanced.database.PublishRequest
 import com.github.redditvanced.modals.respondError
 import dev.kord.common.entity.*
 import dev.kord.common.entity.optional.optional
+import dev.kord.rest.builder.component.ActionRowBuilder
 import dev.kord.rest.builder.message.EmbedBuilder
-import dev.kord.rest.builder.message.create.actionRow
 import dev.kord.rest.json.request.InteractionApplicationCommandCallbackData
 import dev.kord.rest.json.request.InteractionResponseCreateRequest
 import dev.kord.rest.service.RestClient
@@ -34,20 +34,9 @@ object PluginPublishing {
 		.split(',')
 		.map { it.toULongOrNull() ?: throw IllegalArgumentException("Failed to parse verify role ids!") }
 
-	// The current plugin being built
-	// This is changed depending on latest approve / reset by GitHub webhook
-	private var currentBuild: PublishPlugin? = null
-
 	fun Application.configurePluginPublishing() = routing {
 		post("github") {
 			// TODO: GitHub webhook
-		}
-
-		post("github/currentBuild") {
-			data class Response(
-				val data: PublishPlugin?,
-			)
-			call.respond(Response(currentBuild))
 		}
 
 		post("discord") {
@@ -154,11 +143,7 @@ object PluginPublishing {
 				val message = discord.channel.createMessage(verificationChannel) {
 					content = "Awaiting approval..."
 					embeds += buildRequestEmbed(data, 0, lastApprovedCommit, lastSharedCommit)
-					actionRow {
-						interactionButton(ButtonStyle.Success, "publishRequest-$newRequestId-approve") {}
-						interactionButton(ButtonStyle.Secondary, "publishRequest-$newRequestId-noci") {}
-						interactionButton(ButtonStyle.Danger, "publishRequest-$newRequestId-deny") {}
-					}
+					components += buildRequestButtons(newRequestId, false)
 				}
 				message.id.value
 			} else {
@@ -197,11 +182,13 @@ object PluginPublishing {
 			url = "https://github.com/$owner"
 			name = owner
 		}
+
+		// TODO: add preview diff if changes are small-ish <2000chars
 		description = """
 			❯ Info
 			• Compare: ${if (lastSharedCommit != null) "[Github](https://github.com/$owner/$repo/compare/$lastSharedCommit...$commit)" else "New repository ✨"}
 			• Target commit: `$commit` + previous (if any)
-			• Updates to request: $updates
+			• Request updates: $updates
 
 			❯ History
 			• Last approved commit: ${if (lastApprovedCommit != null) "`$lastApprovedCommit`" else "None"}
@@ -211,7 +198,7 @@ object PluginPublishing {
 	}
 
 	private val btnIdRegex = "^publishRequest-(\\d+)-(approve|deny|noci)$".toRegex()
-	private fun handleComponentInteraction(interaction: DiscordInteraction): InteractionResponseCreateRequest {
+	private suspend fun handleComponentInteraction(interaction: DiscordInteraction): InteractionResponseCreateRequest {
 		// Check if member has one of the "approve" roles
 		val hasPermissions = interaction.member.value!!.roles
 			.map { it.value }
@@ -228,31 +215,62 @@ object PluginPublishing {
 			val (idStr, action) = idParts.destructured
 			val id = idStr.toInt()
 
-			// TODO: implement queue
-			// Deny approving plugins to build while another build is currently running.
-			// This is because workflows rely on the "/github/currentBuild" endpoint to get target plugin info.
-			if (action == "approve" && currentBuild != null)
-				return ephemeralResponse("There is current another plugin being built!\nPlease wait until that finishes in order to approve a build!")
+			if (action != "approve")
+				return ephemeralResponse("TODO")
 
 			// Get plugin request details
 			val publishRequest = transaction {
-				PublishRequest.select { PublishRequest.id eq id }.singleOrNull()
+				PublishRequest
+					.select { PublishRequest.id eq id }
+					.singleOrNull()
 			}
 
 			// Verify request still exists
 			publishRequest ?: return ephemeralResponse("Unknown plugin publish request!")
 
-			// TODO: finish this
+			val data = with(PublishRequest) {
+				PublishPlugin(
+					publishRequest[owner],
+					publishRequest[repo],
+					publishRequest[plugin],
+					publishRequest[targetCommit]
+				)
+			}
 
-			InteractionResponseCreateRequest(
-				InteractionResponseType.UpdateMessage,
-				InteractionApplicationCommandCallbackData(
-					content = "abc123here".optional(),
-					components = emptyList<DiscordComponent>().optional()
-				).optional()
-			)
+			// TODO: make owner/repo env variable
+			// Trigger GitHub workflow & update message status / disable buttons
+			return try {
+				GithubUtils.triggerPluginBuild("RedditVanced", "plugin-store", data)
+				InteractionResponseCreateRequest(
+					type = InteractionResponseType.UpdateMessage,
+					InteractionApplicationCommandCallbackData(
+						content = "Building...".optional(),
+						components = listOf(DiscordComponent(
+							type = ComponentType.ActionRow,
+							components = listOf(buildRequestButtons(id, true).build()).optional()
+						)).optional()
+					).optional()
+				)
+			} catch (t: Throwable) {
+				if (t.message == null)
+					t.printStackTrace()
+				ephemeralResponse(t.message ?: "An unknown error occurred!")
+			}
 		}
 	}
+
+	private fun buildRequestButtons(requestId: Int, disabled: Boolean) =
+		ActionRowBuilder().apply {
+			interactionButton(ButtonStyle.Success, "publishRequest-$requestId-approve") {
+				this.disabled = disabled
+			}
+			interactionButton(ButtonStyle.Secondary, "publishRequest-$requestId-noci") {
+				this.disabled = disabled
+			}
+			interactionButton(ButtonStyle.Danger, "publishRequest-$requestId-deny") {
+				this.disabled = disabled
+			}
+		}
 
 	private fun ephemeralResponse(msg: String) = InteractionResponseCreateRequest(
 		InteractionResponseType.ChannelMessageWithSource,
@@ -264,7 +282,7 @@ object PluginPublishing {
 
 	@Serializable
 	@Location("publishPlugin/{githubUsername}/{githubRepo}")
-	private data class PublishPlugin(
+	data class PublishPlugin(
 		val owner: String,
 		val repo: String,
 		val plugin: String,

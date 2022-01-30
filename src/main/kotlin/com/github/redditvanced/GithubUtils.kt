@@ -3,10 +3,26 @@ package com.github.redditvanced
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
+import io.ktor.http.*
 
 object GithubUtils {
 	private val http = HttpClient()
 	private val githubToken = System.getenv("GITHUB_TOKEN")
+
+	data class TriggerWorkflow(
+		val event_type: String,
+		val client_payload: PluginPublishing.PublishPlugin,
+	)
+
+	suspend fun triggerPluginBuild(owner: String, repo: String, data: PluginPublishing.PublishPlugin) {
+		val response = http.post("https://api.github.com/repos/$owner/$repo/dispatches") {
+			header("Authorization", "bearer $githubToken")
+			header("Accept", "application/vnd.github.v3+json")
+			setBody(TriggerWorkflow("plugin_build", data))
+		}
+		if (!response.status.isSuccess())
+			throw Error("Failed to run plugin build workflow for $owner/$repo: ${response.status}")
+	}
 
 	suspend fun getLastSharedCommit(owner: String, repo: String, expectedCommits: List<String>): String? {
 		var max = 10 // Max scanned history is (n-1)*100 + 10, so 910 commits
@@ -52,8 +68,9 @@ object GithubUtils {
 			}
 		""".trimIndent().replace("(\\n|\\s{2,})".toRegex(), "")
 
-		val response = http.get("https://api.github.com/graphql") {
-			header("Authentication", "token $githubToken")
+		val response = http.post("https://api.github.com/graphql") {
+			header("Authorization", "bearer $githubToken")
+			header("Accept", "application/vnd.github.v3+json")
 			setBody(gql)
 		}
 
