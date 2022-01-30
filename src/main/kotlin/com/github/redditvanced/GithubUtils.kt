@@ -4,6 +4,7 @@ import com.github.redditvanced.publishing.PublishPluginRoute
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import io.ktor.http.*
 
 object GithubUtils {
@@ -88,5 +89,12 @@ object GithubUtils {
 		val commits = (history["edges"] as List<*>)
 			.map { ((it as Map<*, *>)["node"] as Map<*, *>)["oid"] as String }
 		return commits to hasNextPage
+	}
+
+	private val diffRegex = "\\+\\+\\+ b\\/(.+?)(?:diff|\$)".toRegex(RegexOption.DOT_MATCHES_ALL)
+	suspend fun parseDiff(diffUrl: String): List<String> {
+		val diff = http.get(diffUrl).bodyAsText()
+		val matches = diffRegex.findAll(diff)
+		return matches.map { "+++ " + it.groups[1]!!.value }.toList()
 	}
 }

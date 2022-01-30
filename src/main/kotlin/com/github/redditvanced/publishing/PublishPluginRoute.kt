@@ -129,7 +129,7 @@ object PublishPluginRoute {
 		}
 	}
 
-	private fun buildRequestEmbed(
+	private suspend fun buildRequestEmbed(
 		data: PublishPlugin,
 		updates: Int,
 		lastApprovedCommit: String?,
@@ -145,10 +145,15 @@ object PublishPluginRoute {
 			name = owner
 		}
 
-		// TODO: add preview diff if changes are small-ish <2000chars
+		val diffUrl = "https://github.com/$owner/$repo/compare/$lastSharedCommit...$commit"
+		val diffs = GithubUtils
+			.parseDiff("$diffUrl.diff")
+			.map { it.replace("```", "\\```") }
+			.joinToString("\n") { "```diff\n$it```" }
+
 		description = """
 			❯ Info
-			• Compare: ${if (lastSharedCommit != null) "[Github](https://github.com/$owner/$repo/compare/$lastSharedCommit...$commit)" else "New repository ✨"}
+			• Compare: ${if (lastSharedCommit != null) "[Github]($diffUrl)" else "New repository ✨"}
 			• Target commit: `$commit` + previous (if any)
 			• Request updates: $updates
 
@@ -156,6 +161,8 @@ object PublishPluginRoute {
 			• Last approved commit: ${if (lastApprovedCommit != null) "`$lastApprovedCommit`" else "None"}
 			• Last shared commit: `${lastSharedCommit ?: "N/A"}`
 			${if (lastApprovedCommit != lastSharedCommit) "• Force push detected!" else ""}
+
+			${if (diffs.length <= 3000) "❯ Changes\n$diffs" else ""}
 		""".trimIndent()
 	}
 
