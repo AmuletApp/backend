@@ -10,9 +10,6 @@ import dev.kord.rest.builder.message.create.actionRow
 import dev.kord.rest.json.request.InteractionApplicationCommandCallbackData
 import dev.kord.rest.json.request.InteractionResponseCreateRequest
 import dev.kord.rest.service.RestClient
-import io.ktor.client.*
-import io.ktor.client.call.*
-import io.ktor.client.request.*
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.locations.*
@@ -30,9 +27,6 @@ import org.jetbrains.exposed.sql.transactions.transaction
 
 @OptIn(KtorExperimentalLocationsAPI::class)
 object PluginPublishing {
-	private val httpClient = HttpClient()
-	private val githubToken = System.getenv("GITHUB_TOKEN")
-
 	private val rest = RestClient(System.getenv("DISCORD_TOKEN"))
 	private val verifier = InteractionRequestVerifier(System.getenv("DISCORD_PUBLIC_KEY"))
 	private val verificationChannel = Snowflake(System.getenv("DISCORD_PUBLISHING_CHANNEL_ID"))
@@ -131,11 +125,14 @@ object PluginPublishing {
 					?.get(PluginRepo.approvedCommits)
 					?.split(',')
 			}
+
 			// Get the most recent approved commit to compare against
 			val lastApprovedCommit = knownCommits?.first()
-			val lastSharedCommit = if (knownCommits == null) null else {
-				getLastSharedCommit(data.owner, data.repo, knownCommits)
-			}
+
+			// Get the most recent commit that is approved and present on the remote repo
+			// This is needed because a force push might have removed it
+			val lastSharedCommit = if (knownCommits == null) null else
+				GithubUtils.getLastSharedCommit(data.owner, data.repo, knownCommits)
 
 			val messageId = if (existingMessageId == null) {
 				// Add request to DB and return the new ID
@@ -246,70 +243,6 @@ object PluginPublishing {
 			flags = MessageFlags(MessageFlag.Ephemeral).optional()
 		).optional()
 	)
-
-	private suspend fun getLastSharedCommit(owner: String, repo: String, expectedCommits: List<String>): String? {
-		var max = 10 // Max scanned history is (n-1)*100 + 10, so 910 commits
-		var commits = emptyList<String>()
-		var hasNextPage = true
-
-		while (max-- > 0 && hasNextPage) {
-			val data = if (commits.isEmpty())
-				getCommits(owner, repo, 10)
-			else
-				getCommits(owner, repo, 100, after = commits.last())
-			commits = data.first
-			hasNextPage = data.second
-
-			return expectedCommits.find { it in commits } ?: continue
-		}
-		return null
-	}
-
-	// Return commits + whether there's more commits
-	@Suppress("UNCHECKED_CAST")
-	private suspend fun getCommits(owner: String, repo: String, amount: Int, after: String? = null): Pair<List<String>, Boolean> {
-		val gql = """
-			{
-			  repository(owner: "$owner", name: "$repo") {
-			    defaultBranchRef {
-			      target {
-			        ... on Commit {
-			          history(first: $amount ${if (after != null) ", after: \"$after\"" else ""}) {
-			            pageInfo {
-			              hasNextPage
-			            }
-			            edges {
-			              node {
-			                oid
-			              }
-			            }
-			          }
-			        }
-			      }
-			    }
-			  }
-			}
-		""".trimIndent().replace("(\\n|\\s{2,})".toRegex(), "")
-
-		val response = httpClient.get("https://api.github.com/graphql") {
-			header("Authentication", "token $githubToken")
-			setBody(gql)
-		}
-
-		println("requesting github api")
-
-		// TODO: clean up this hot garbage
-		val data = response.body<Map<*, *>>() as Map<String, Map<String, Map<String, Map<String, Map<String, Map<String, *>>>>>>
-
-		if (data.containsKey("errors"))
-			throw Error(data["errors"].toString())
-
-		val history = data["data"]!!["repository"]!!["defaultBranchRef"]!!["target"]!!["history"]!!
-		val hasNextPage = (history["pageInfo"] as Map<*, *>)["hasNextPage"] as Boolean
-		val commits = (history["edges"] as List<*>)
-			.map { ((it as Map<*, *>)["node"] as Map<*, *>)["oid"] as String }
-		return commits to hasNextPage
-	}
 
 	@Serializable
 	@Location("publishPlugin/{githubUsername}/{githubRepo}")
