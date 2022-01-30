@@ -1,5 +1,6 @@
 package com.github.redditvanced
 
+import com.github.redditvanced.publishing.PublishPluginRoute
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.request.*
@@ -11,10 +12,10 @@ object GithubUtils {
 
 	data class TriggerWorkflow(
 		val event_type: String,
-		val client_payload: PluginPublishing.PublishPlugin,
+		val client_payload: PublishPluginRoute.PublishPlugin,
 	)
 
-	suspend fun triggerPluginBuild(owner: String, repo: String, data: PluginPublishing.PublishPlugin) {
+	suspend fun triggerPluginBuild(owner: String, repo: String, data: PublishPluginRoute.PublishPlugin) {
 		val response = http.post("https://api.github.com/repos/$owner/$repo/dispatches") {
 			header("Authorization", "bearer $githubToken")
 			header("Accept", "application/vnd.github.v3+json")

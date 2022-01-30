@@ -1,6 +1,6 @@
 package com.github.redditvanced
 
-import com.github.redditvanced.PluginPublishing.configurePluginPublishing
+import com.github.redditvanced.publishing.Publishing.configurePluginPublishing
 import com.github.redditvanced.database.PluginRepo
 import com.github.redditvanced.database.PublishRequest
 import com.github.redditvanced.plugins.configureMonitoring
