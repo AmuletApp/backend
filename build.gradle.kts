@@ -11,6 +11,14 @@ group = "com.github.redditvanced"
 version = "1.0.0"
 
 repositories {
+	// Because kord decided to use pom.xml amazing
+	maven("https://jitpack.io") {
+		metadataSources { mavenPom() }
+		content {
+			includeGroup("com.github.RedditVanced.kord")
+		}
+	}
+
 	mavenCentral()
 	maven("https://maven.pkg.jetbrains.space/public/p/ktor/eap")
 	maven("https://oss.sonatype.org/content/repositories/snapshots/")
@@ -20,7 +28,6 @@ repositories {
 
 dependencies {
 	val ktorVersion: String by project
-	val kotlinVersion: String by project
 	val logbackVersion: String by project
 	val prometheusVersion: String by project
 	val exposedVersion: String by project
@@ -36,7 +43,6 @@ dependencies {
 	implementation("io.ktor:ktor-server-status-pages:$ktorVersion")
 	implementation("io.ktor:ktor-server-call-logging:$ktorVersion")
 	implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
-	implementation("io.ktor:ktor-server-double-receive:$ktorVersion")
 	implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
 	implementation("io.ktor:ktor-server-metrics-micrometer:$ktorVersion")
 	implementation("io.micrometer:micrometer-registry-prometheus:$prometheusVersion")
@@ -57,7 +63,7 @@ dependencies {
 	implementation("com.google.protobuf:protobuf-java:3.19.3")
 
 	// Kord
-	implementation("dev.kord:kord-rest:0.8.0-M8")
+	implementation("com.github.RedditVanced.kord:kord-rest:feature~ktor-2-SNAPSHOT")
 	implementation("net.perfectdreams.discordinteraktions:requests-verifier:0.0.12-SNAPSHOT")
 }
 
@@ -72,6 +78,6 @@ application {
 }
 
 java {
-	sourceCompatibility = JavaVersion.VERSION_17
-	targetCompatibility = JavaVersion.VERSION_17
+	sourceCompatibility = JavaVersion.VERSION_16
+	targetCompatibility = JavaVersion.VERSION_16
 }
