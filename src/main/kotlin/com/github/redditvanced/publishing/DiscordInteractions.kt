@@ -22,6 +22,8 @@ import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 
 object DiscordInteractions {
+	private val githubOwner = System.getenv("GITHUB_OWNER")
+	private val pluginStoreRepo = System.getenv("PLUGIN_STORE_REPO")
 	private val verifier = InteractionRequestVerifier(System.getenv("DISCORD_PUBLIC_KEY"))
 	private val btnIdRegex = "^publishRequest-(\\d+)-(approve|deny|noci)$".toRegex()
 	private val allowedRoles = System
@@ -106,7 +108,8 @@ object DiscordInteractions {
 			// TODO: make owner/repo env variable
 			// Trigger GitHub workflow & update message status / disable buttons
 			return try {
-				GithubUtils.triggerPluginBuild("RedditVanced", "plugin-store", data)
+				GithubUtils.triggerPluginBuild(githubOwner, pluginStoreRepo, data)
+
 				InteractionResponseCreateRequest(
 					type = InteractionResponseType.UpdateMessage,
 					InteractionApplicationCommandCallbackData(
