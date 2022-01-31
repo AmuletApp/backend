@@ -6,12 +6,16 @@ import io.ktor.client.call.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 
 object GithubUtils {
 	private val http = HttpClient()
 	private val githubToken = System.getenv("GITHUB_TOKEN")
 
-	data class TriggerWorkflow(
+	@Serializable
+	private data class TriggerWorkflow(
 		val event_type: String,
 		val client_payload: PublishPluginRoute.PublishPlugin,
 	)
@@ -20,7 +24,8 @@ object GithubUtils {
 		val response = http.post("https://api.github.com/repos/$owner/$repo/dispatches") {
 			header("Authorization", "bearer $githubToken")
 			header("Accept", "application/vnd.github.v3+json")
-			setBody(TriggerWorkflow("plugin_build", data))
+			header("Content-Type", "application/json")
+			setBody(Json.encodeToString(TriggerWorkflow("plugin_build", data)))
 		}
 		if (!response.status.isSuccess())
 			throw Error("Failed to run plugin build workflow for $owner/$repo: ${response.status}")
@@ -68,7 +73,7 @@ object GithubUtils {
 			    }
 			  }
 			}
-		""".trimIndent().replace("(\\n|\\s{2,})".toRegex(), "")
+		"""
 
 		val response = http.post("https://api.github.com/graphql") {
 			header("Authorization", "bearer $githubToken")
