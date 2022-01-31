@@ -20,12 +20,15 @@ object Publishing {
 	fun buildRequestButtons(requestId: Int, disabled: Boolean) =
 		ActionRowBuilder().apply {
 			interactionButton(ButtonStyle.Success, "publishRequest-$requestId-approve") {
+				label = "Approve"
 				this.disabled = disabled
 			}
 			interactionButton(ButtonStyle.Secondary, "publishRequest-$requestId-noci") {
+				label = "Approve [No-CI]"
 				this.disabled = disabled
 			}
 			interactionButton(ButtonStyle.Danger, "publishRequest-$requestId-deny") {
+				label = "Deny"
 				this.disabled = disabled
 			}
 		}
