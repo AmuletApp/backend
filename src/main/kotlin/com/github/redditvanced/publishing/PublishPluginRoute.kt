@@ -152,7 +152,7 @@ object PublishPluginRoute {
 		}
 
 		val diffUrl = "https://github.com/$owner/$repo/compare/$lastSharedCommit...$commit"
-		val diffs = GithubUtils
+		val diffs = if (lastSharedCommit == null) null else GithubUtils
 			.parseDiff("$diffUrl.diff")
 			.map { it.replace("```", "\\```") }
 			.joinToString("\n") { "```diff\n$it```" }
@@ -168,12 +168,12 @@ object PublishPluginRoute {
 			• Last shared commit: `${lastSharedCommit ?: "N/A"}`
 			${if (lastApprovedCommit != lastSharedCommit) "• Force push detected!" else ""}
 
-			${if (diffs.length <= 3000) "❯ Changes\n$diffs" else ""}
+			${if (diffs != null && diffs.length <= 4000) "❯ Changes\n$diffs" else ""}
 		""".trimIndent()
 	}
 
 	@Serializable
-	@Location("publishPlugin/{githubUsername}/{githubRepo}")
+	@Location("publish/{owner}/{repo}")
 	data class PublishPlugin(
 		val owner: String,
 		val repo: String,
