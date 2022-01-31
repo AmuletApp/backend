@@ -28,7 +28,7 @@ object PublishPluginRoute {
 			// Checks if request already exists
 			val existingRequest = transaction {
 				PublishRequest
-					.slice(PublishRequest.id, PublishRequest.messageId)
+					.slice(PublishRequest.id, PublishRequest.messageId, PublishRequest.updates)
 					.select {
 						PublishRequest.owner eq data.owner and
 							(PublishRequest.repo eq data.repo) and
@@ -40,14 +40,6 @@ object PublishPluginRoute {
 			// Check if request's message still present
 			val existingMessageId = if (existingRequest == null) null else {
 				val requestId = existingRequest[PublishRequest.id]
-
-				// Update the target commit to approve in DB and increment updates counter
-				transaction {
-					PublishRequest.update({ PublishRequest.id eq requestId }) {
-						it[targetCommit] = data.targetCommit
-						it[updates] = updates + 1
-					}
-				}
 
 				// Verify that message exists
 				val messageId = existingRequest[PublishRequest.messageId]
@@ -65,6 +57,13 @@ object PublishPluginRoute {
 					PublishRequest.deleteWhere { PublishRequest.id eq requestId }
 					null
 				} else {
+					// Update the target commit to approve in DB and increment updates counter
+					transaction {
+						PublishRequest.update({ PublishRequest.id eq requestId }) {
+							it[targetCommit] = data.targetCommit
+							it[updates] = updates + 1
+						}
+					}
 					messageId
 				}
 			}
@@ -120,7 +119,7 @@ object PublishPluginRoute {
 				discord.channel.editMessage(publishChannel, Snowflake(existingMessageId)) {
 					embeds = mutableListOf(buildRequestEmbed(
 						data,
-						existingRequest!![PublishRequest.updates],
+						existingRequest!![PublishRequest.updates] + 1,
 						lastApprovedCommit,
 						lastSharedCommit
 					))
