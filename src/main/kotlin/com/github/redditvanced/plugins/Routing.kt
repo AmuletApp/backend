@@ -4,6 +4,8 @@ package com.github.redditvanced.plugins
 
 import com.github.redditvanced.modals.AccountCredentialsModel
 import com.github.redditvanced.modals.respondError
+import com.github.redditvanced.publishing.DiscordInteractions.configureDiscordInteractions
+import com.github.redditvanced.publishing.PublishPluginRoute.configurePublishPluginRoute
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
@@ -46,5 +48,8 @@ fun Application.configureRouting() {
 				System.getenv("GOOGLE_PASSWORD")
 			))
 		}
+
+		configurePublishPluginRoute()
+		configureDiscordInteractions()
 	}
 }

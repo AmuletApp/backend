@@ -3,7 +3,6 @@ package com.github.redditvanced.publishing
 import com.github.redditvanced.GithubUtils
 import com.github.redditvanced.database.PluginRepo
 import com.github.redditvanced.database.PublishRequest
-import com.github.redditvanced.publishing.Publishing.buildRequestButtons
 import dev.kord.common.entity.Snowflake
 import dev.kord.rest.builder.message.EmbedBuilder
 import dev.kord.rest.service.RestClient
@@ -171,13 +170,4 @@ object PublishPluginRoute {
 			${if (diffs != null && diffs.length <= 4000) "❯ Changes\n$diffs" else ""}
 		""".trimIndent()
 	}
-
-	@Serializable
-	@Location("publish/{owner}/{repo}")
-	data class PublishPlugin(
-		val owner: String,
-		val repo: String,
-		val plugin: String,
-		val targetCommit: String,
-	)
 }
