@@ -107,6 +107,13 @@ object PublishPluginRoute {
 					embeds += buildRequestEmbed(data, 0, lastApprovedCommit, lastSharedCommit)
 					components += buildRequestButtons(newRequestId, false)
 				}
+
+				// Update request record to add message id
+				transaction {
+					PublishRequest.update({ PublishRequest.id eq newRequestId }) {
+						it[messageId] = message.id.value.toLong()
+					}
+				}
 				message.id.value
 			} else {
 				// Edit the existing publish request message with new details
