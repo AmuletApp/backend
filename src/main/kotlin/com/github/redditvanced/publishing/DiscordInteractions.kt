@@ -15,6 +15,8 @@ import io.ktor.server.locations.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.*
 import net.perfectdreams.discordinteraktions.verifier.InteractionRequestVerifier
 import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
@@ -29,23 +31,32 @@ object DiscordInteractions {
 
 	@OptIn(KtorExperimentalLocationsAPI::class)
 	fun Routing.configureDiscordInteractions() {
+		val json = Json {
+			ignoreUnknownKeys = true
+		}
+
 		post("discord") {
 			val signature = call.request.headers["X-Signature-Ed25519"]!!
 			val timestamp = call.request.headers["X-Signature-Timestamp"]!!
 
 			// Verify request is sent by Discord
-			val verified = verifier.verifyKey(call.receiveText(), signature, timestamp)
+			val text = call.receiveText()
+			val verified = verifier.verifyKey(text, signature, timestamp)
 			if (!verified) {
 				call.respondText("", ContentType.Application.Json, HttpStatusCode.Unauthorized)
 				return@post
 			}
 
-			val interaction = call.receive<DiscordInteraction>()
+			val data = Json.parseToJsonElement(text).jsonObject
 
 			// Respond to the interaction
-			if (interaction.type == InteractionType.Ping)
-				call.respond(InteractionResponseCreateRequest(InteractionResponseType.Pong))
-			else if (interaction.type == InteractionType.Component && interaction.member.value != null)
+			if (data["type"]!!.jsonPrimitive.int == InteractionType.Ping.type)
+				return@post call.respond(buildJsonObject {
+					put("type", InteractionResponseType.Pong.type)
+				})
+
+			val interaction = json.decodeFromString<DiscordInteraction>(text)
+			if (interaction.type == InteractionType.Component && interaction.member.value != null)
 				call.respond(handleComponentInteraction(interaction))
 			else {
 				call.respondError("", HttpStatusCode.InternalServerError)
@@ -107,8 +118,7 @@ object DiscordInteractions {
 					).optional()
 				)
 			} catch (t: Throwable) {
-				if (t.message == null)
-					t.printStackTrace()
+				t.printStackTrace()
 				ephemeralResponse(t.message ?: "An unknown error occurred!")
 			}
 		}

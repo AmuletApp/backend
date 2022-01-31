@@ -13,14 +13,19 @@ import io.ktor.server.plugins.*
 import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import kotlinx.serialization.json.Json
 
 fun Application.configureRouting() {
 	install(Locations)
-	install(ContentNegotiation) { json() }
+	install(ContentNegotiation) {
+		json(Json {
+			ignoreUnknownKeys = true
+		})
+	}
 
 	install(StatusPages) {
 		exception<Throwable> { call, err ->
-			log.error("An error occurred", err)
+			log.error("", err)
 			call.respondError(
 				"An internal error occurred. Please try again later.",
 				HttpStatusCode.InternalServerError
