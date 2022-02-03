@@ -29,7 +29,6 @@ repositories {
 dependencies {
 	val ktorVersion: String by project
 	val logbackVersion: String by project
-	val prometheusVersion: String by project
 	val exposedVersion: String by project
 
 	// Ktor & logging
@@ -45,7 +44,7 @@ dependencies {
 	implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
 	implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
 	implementation("io.ktor:ktor-server-metrics-micrometer:$ktorVersion")
-	implementation("io.micrometer:micrometer-registry-prometheus:$prometheusVersion")
+	implementation("io.micrometer:micrometer-registry-influx:1.8.2")
 
 	// Database
 	implementation("org.jetbrains.exposed:exposed-core:$exposedVersion")

@@ -16,6 +16,7 @@ import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.json.Json
+import org.slf4j.event.Level
 
 fun Application.configureRouting() {
 	install(Locations)
@@ -35,9 +36,18 @@ fun Application.configureRouting() {
 		}
 	}
 
+	install(CallLogging) {
+		level = Level.INFO
+		format { "[${it.request.origin.host}] ${it.request.httpMethod.value} ${it.request.uri} - ${it.response.status()}" }
+	}
+
 	routing {
 		static {
 			resource("/robots.txt", "robots.txt")
+		}
+
+		get("/") {
+			call.respondText("Hi! :)")
 		}
 
 		get("google") {
