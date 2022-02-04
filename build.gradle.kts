@@ -43,6 +43,8 @@ dependencies {
 	implementation("io.ktor:ktor-server-call-logging:$ktorVersion")
 	implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
 	implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
+
+	// TODO: remove
 	implementation("io.ktor:ktor-server-metrics-micrometer:$ktorVersion")
 	implementation("io.micrometer:micrometer-registry-influx:1.8.2")
 
@@ -64,6 +66,9 @@ dependencies {
 	// Kord
 	implementation("com.github.RedditVanced.kord:kord-rest:feature~ktor-2-SNAPSHOT")
 	implementation("net.perfectdreams.discordinteraktions:requests-verifier:0.0.12-SNAPSHOT")
+
+	// InfluxDB client
+	implementation("com.influxdb:influxdb-client-kotlin:4.1.0")
 }
 
 tasks.withType<KotlinCompile> {

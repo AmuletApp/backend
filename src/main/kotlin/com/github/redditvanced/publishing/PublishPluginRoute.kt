@@ -1,6 +1,7 @@
 package com.github.redditvanced.publishing
 
 import com.github.redditvanced.GithubUtils
+import com.github.redditvanced.analytics.PublishingAnalytics
 import com.github.redditvanced.database.PluginRepo
 import com.github.redditvanced.database.PublishRequest
 import dev.kord.common.entity.Snowflake
@@ -11,6 +12,7 @@ import io.ktor.server.locations.*
 import io.ktor.server.locations.post
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
+import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import org.jetbrains.exposed.sql.*
 import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
@@ -124,6 +126,15 @@ object PublishPluginRoute {
 					))
 				}
 				existingMessageId
+			}
+
+			// Record plugin publishing analytics
+			launch {
+				PublishingAnalytics.record(PublishingAnalytics.Publish(
+					data.owner,
+					data.plugin,
+					knownCommits == null && existingRequest == null
+				))
 			}
 
 			@Serializable
