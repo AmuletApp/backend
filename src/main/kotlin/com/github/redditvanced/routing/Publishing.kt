@@ -1,9 +1,11 @@
-package com.github.redditvanced.publishing
+package com.github.redditvanced.routing
 
 import com.github.redditvanced.GithubUtils
 import com.github.redditvanced.analytics.PublishingAnalytics
 import com.github.redditvanced.database.PluginRepo
 import com.github.redditvanced.database.PublishRequest
+import com.github.redditvanced.publishing.PublishPlugin
+import com.github.redditvanced.publishing.buildRequestButtons
 import dev.kord.common.entity.Snowflake
 import dev.kord.rest.builder.message.EmbedBuilder
 import dev.kord.rest.service.RestClient
@@ -19,12 +21,12 @@ import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
 import org.jetbrains.exposed.sql.transactions.transaction
 
 @OptIn(KtorExperimentalLocationsAPI::class)
-object PublishPluginRoute {
+object Publishing {
 	private val discord = RestClient(System.getenv("DISCORD_TOKEN"))
 	private val publishChannel = Snowflake(System.getenv("DISCORD_PUBLISHING_CHANNEL_ID"))
 	private val serverId = System.getenv("DISCORD_SERVER_ID")
 
-	fun Routing.configurePublishPluginRoute() {
+	fun Routing.configurePublishing() {
 		post<PublishPlugin> { data ->
 			// Checks if request already exists
 			val existingRequest = transaction {
@@ -141,7 +143,7 @@ object PublishPluginRoute {
 			data class Response(
 				val message: String,
 			)
-			call.respond(Response("Success! https://discord.com/${serverId}/${publishChannel}/$messageId"))
+			call.respond(Response("Success! https://discord.com/$serverId/$publishChannel/$messageId"))
 		}
 	}
 

@@ -1,11 +1,13 @@
 package com.github.redditvanced
 
 import com.github.redditvanced.analytics.BackendAnalytics
+import com.github.redditvanced.analytics.RequestAnalytics
 import com.github.redditvanced.migrations.M001
-import com.github.redditvanced.plugins.configureRouting
+import com.github.redditvanced.routing.configureRouting
 import gay.solonovamax.exposed.migrations.runMigrations
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
+import io.ktor.server.metrics.micrometer.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.*
 import io.ktor.server.request.*
@@ -30,6 +32,11 @@ fun main() {
 		install(CallLogging) {
 			level = Level.INFO
 			format { "[${it.request.origin.host}] ${it.request.httpMethod.value} ${it.request.uri} - ${it.response.status()}" }
+		}
+
+		install(MicrometerMetrics) {
+			registry = RequestAnalytics.registry
+			meterBinders = emptyList()
 		}
 	}
 	server.start(wait = true)
