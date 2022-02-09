@@ -105,7 +105,6 @@ object DiscordInteractions {
 				)
 			}
 
-			// TODO: make owner/repo env variable
 			// Trigger GitHub workflow & update message status / disable buttons
 			return try {
 				GithubUtils.triggerPluginBuild(githubOwner, pluginStoreRepo, data)

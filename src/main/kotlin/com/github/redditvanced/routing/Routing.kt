@@ -37,6 +37,7 @@ fun Application.configureRouting() {
 		configureAnalytics()
 		configurePublishing()
 		configureDiscordInteractions()
+		configureGithubWebhook()
 
 		static {
 			resource("/robots.txt", "robots.txt")
