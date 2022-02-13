@@ -1,5 +1,6 @@
 package com.github.redditvanced.routing
 
+import com.github.redditvanced.modals.AccountCredentialsModel
 import com.github.redditvanced.modals.respondError
 import com.github.redditvanced.routing.DiscordInteractions.configureDiscordInteractions
 import com.github.redditvanced.routing.Publishing.configurePublishing
@@ -9,6 +10,7 @@ import io.ktor.server.application.*
 import io.ktor.server.http.content.*
 import io.ktor.server.locations.*
 import io.ktor.server.plugins.*
+import io.ktor.server.request.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.serialization.json.Json
@@ -33,7 +35,6 @@ fun Application.configureRouting() {
 	}
 
 	routing {
-		configureGoogle()
 		configureAnalytics()
 		configurePublishing()
 		configureDiscordInteractions()
@@ -45,6 +46,15 @@ fun Application.configureRouting() {
 
 		get("/") {
 			call.respondText("Hi! :)")
+		}
+
+		get("google") {
+			if (call.request.userAgent() != "RedditVanced")
+				call.respond(HttpStatusCode.NotFound, "")
+			else call.respond(AccountCredentialsModel(
+				System.getenv("GOOGLE_EMAIL"),
+				System.getenv("GOOGLE_PASSWORD")
+			))
 		}
 	}
 }
