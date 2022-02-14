@@ -4,11 +4,13 @@ import com.github.redditvanced.GithubUtils
 import com.github.redditvanced.analytics.PublishingAnalytics
 import com.github.redditvanced.database.PluginRepo
 import com.github.redditvanced.database.PublishRequest
+import com.github.redditvanced.modals.respondError
 import com.github.redditvanced.publishing.PublishPlugin
 import com.github.redditvanced.publishing.buildRequestButtons
 import dev.kord.common.entity.Snowflake
 import dev.kord.rest.builder.message.EmbedBuilder
 import dev.kord.rest.service.RestClient
+import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.locations.*
 import io.ktor.server.locations.post
@@ -25,9 +27,16 @@ object Publishing {
 	private val discord = RestClient(System.getenv("DISCORD_TOKEN"))
 	private val publishChannel = Snowflake(System.getenv("DISCORD_PUBLISHING_CHANNEL_ID"))
 	private val serverId = System.getenv("DISCORD_SERVER_ID")
+	private val bannedPlugins = listOf("HelloWorld", "Template")
 
 	fun Routing.configurePublishing() {
 		post<PublishPlugin> { data ->
+			// Check for generic plugin names
+			if (data.plugin in bannedPlugins) {
+				call.respondError("The ${data.plugin} plugin is banned from being published!", HttpStatusCode.BadRequest)
+				return@post
+			}
+
 			// Checks if request already exists
 			val existingRequest = transaction {
 				PublishRequest

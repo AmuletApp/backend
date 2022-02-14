@@ -10,7 +10,7 @@ object RequestAnalytics {
 
 	private val config = object : InfluxConfig {
 		override fun get(key: String) = null
-		override fun bucket() = "Backend"
+		override fun bucket() = "Requests"
 		override fun org() = "admin"
 		override fun token(): String =
 			System.getenv("INFLUX_TOKEN")
