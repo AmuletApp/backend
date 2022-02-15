@@ -3,7 +3,6 @@ package com.github.redditvanced.routing
 import com.github.redditvanced.GithubUtils
 import com.github.redditvanced.database.PublishRequest
 import com.github.redditvanced.modals.respondError
-import com.github.redditvanced.publishing.PublishPlugin
 import com.github.redditvanced.publishing.buildRequestButtons
 import dev.kord.common.entity.*
 import dev.kord.common.entity.optional.optional
@@ -22,8 +21,6 @@ import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 
 object DiscordInteractions {
-	private val githubOwner = System.getenv("GITHUB_OWNER")
-	private val pluginStoreRepo = System.getenv("PLUGIN_STORE_REPO")
 	private val verifier = InteractionRequestVerifier(System.getenv("DISCORD_PUBLIC_KEY"))
 	private val btnIdRegex = "^publishRequest-(\\d+)-(approve|deny|noci)$".toRegex()
 	private val allowedRoles = System
@@ -96,18 +93,14 @@ object DiscordInteractions {
 			// Verify request still exists
 			publishRequest ?: return ephemeralResponse("Unknown plugin publish request!")
 
-			val data = with(PublishRequest) {
-				PublishPlugin(
-					publishRequest[owner],
-					publishRequest[repo],
-					publishRequest[plugin],
-					publishRequest[targetCommit]
-				)
-			}
-
 			// Trigger GitHub workflow & update message status / disable buttons
 			return try {
-				GithubUtils.triggerPluginBuild(githubOwner, pluginStoreRepo, data)
+				GithubUtils.triggerPluginBuild(GithubUtils.DispatchInputs(
+					publishRequest[PublishRequest.owner],
+					publishRequest[PublishRequest.repo],
+					publishRequest[PublishRequest.plugin],
+					publishRequest[PublishRequest.targetCommit]
+				))
 
 				InteractionResponseCreateRequest(
 					type = InteractionResponseType.UpdateMessage,
