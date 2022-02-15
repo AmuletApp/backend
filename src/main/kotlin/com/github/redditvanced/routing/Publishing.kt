@@ -5,8 +5,6 @@ import com.github.redditvanced.analytics.PublishingAnalytics
 import com.github.redditvanced.database.PluginRepo
 import com.github.redditvanced.database.PublishRequest
 import com.github.redditvanced.modals.respondError
-import com.github.redditvanced.publishing.PublishPlugin
-import com.github.redditvanced.publishing.buildRequestButtons
 import dev.kord.common.entity.Snowflake
 import dev.kord.rest.builder.message.EmbedBuilder
 import dev.kord.rest.service.RestClient
@@ -29,8 +27,16 @@ object Publishing {
 	private val serverId = System.getenv("DISCORD_SERVER_ID")
 	private val bannedPlugins = listOf("HelloWorld", "Template")
 
+	@Location("publish/{owner}/{repository}")
+	private data class PublishRequestRoute(
+		val owner: String,
+		val repository: String,
+		val plugin: String,
+		val targetCommit: String,
+	)
+
 	fun Routing.configurePublishing() {
-		post<PublishPlugin> { data ->
+		post<PublishRequestRoute> { data ->
 			// Check for generic plugin names
 			if (data.plugin in bannedPlugins) {
 				call.respondError("The ${data.plugin} plugin is banned from being published!", HttpStatusCode.BadRequest)
@@ -38,12 +44,12 @@ object Publishing {
 			}
 
 			// Checks if request already exists
-			val existingRequest = transaction {
+			var existingRequest = transaction {
 				PublishRequest
 					.slice(PublishRequest.id, PublishRequest.messageId, PublishRequest.updates)
 					.select {
 						PublishRequest.owner eq data.owner and
-							(PublishRequest.repo eq data.repo) and
+							(PublishRequest.repo eq data.repository) and
 							(PublishRequest.plugin eq data.plugin)
 					}
 					.singleOrNull()
@@ -67,6 +73,7 @@ object Publishing {
 				// This will go on to generate a new request
 				if (message == null) transaction {
 					PublishRequest.deleteWhere { PublishRequest.id eq requestId }
+					existingRequest = null
 					null
 				} else {
 					// Update the target commit to approve in DB and increment updates counter
@@ -86,7 +93,7 @@ object Publishing {
 					.slice(PluginRepo.approvedCommits)
 					.select {
 						PluginRepo.owner eq data.owner and
-							(PluginRepo.repo eq data.repo)
+							(PluginRepo.repo eq data.repository)
 					}
 					.singleOrNull()
 					?.get(PluginRepo.approvedCommits)
@@ -99,14 +106,14 @@ object Publishing {
 			// Get the most recent commit that is approved and present on the remote repo
 			// This is needed because a force push might have removed it
 			val lastSharedCommit = if (knownCommits == null) null else
-				GithubUtils.getLastSharedCommit(data.owner, data.repo, knownCommits)
+				GithubUtils.getLastSharedCommit(data.owner, data.repository, knownCommits)
 
 			val messageId = if (existingMessageId == null) {
 				// Add request to DB and return the new ID
 				val newRequestId = transaction {
 					PublishRequest.insertAndGetId {
 						it[owner] = data.owner
-						it[repo] = data.repo
+						it[repo] = data.repository
 						it[plugin] = data.plugin
 						it[targetCommit] = data.targetCommit
 					}.value
@@ -157,7 +164,7 @@ object Publishing {
 	}
 
 	private suspend fun buildRequestEmbed(
-		data: PublishPlugin,
+		data: PublishRequestRoute,
 		updates: Int,
 		lastApprovedCommit: String?,
 		lastSharedCommit: String?,

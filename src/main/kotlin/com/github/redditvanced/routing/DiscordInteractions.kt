@@ -3,9 +3,9 @@ package com.github.redditvanced.routing
 import com.github.redditvanced.GithubUtils
 import com.github.redditvanced.database.PublishRequest
 import com.github.redditvanced.modals.respondError
-import com.github.redditvanced.publishing.buildRequestButtons
 import dev.kord.common.entity.*
 import dev.kord.common.entity.optional.optional
+import dev.kord.rest.builder.component.ActionRowBuilder
 import dev.kord.rest.json.request.InteractionApplicationCommandCallbackData
 import dev.kord.rest.json.request.InteractionResponseCreateRequest
 import io.ktor.http.*
@@ -127,3 +127,19 @@ object DiscordInteractions {
 		).optional()
 	)
 }
+
+fun buildRequestButtons(requestId: Int, disabled: Boolean) =
+	ActionRowBuilder().apply {
+		interactionButton(ButtonStyle.Success, "publishRequest-$requestId-approve") {
+			label = "Approve"
+			this.disabled = disabled
+		}
+		interactionButton(ButtonStyle.Secondary, "publishRequest-$requestId-noci") {
+			label = "Approve [No-CI]"
+			this.disabled = disabled
+		}
+		interactionButton(ButtonStyle.Danger, "publishRequest-$requestId-deny") {
+			label = "Deny"
+			this.disabled = disabled
+		}
+	}
