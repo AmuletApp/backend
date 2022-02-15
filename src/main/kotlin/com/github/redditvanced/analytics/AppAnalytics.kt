@@ -22,11 +22,16 @@ object AppAnalytics {
 	@Measurement(name = "launches")
 	data class Launch(
 		/**
-		 * This is included so that we can tell amount of total users a day.
-		 * (App will be launched multiple times a day)
+		 * The client stores the last launch date and if was yesterday (UTC) then this is true.
 		 */
 		@Column
-		val sha1Username: String,
+		val firstDaily: Boolean,
+
+		@Column
+		val pluginCount: Int,
+
+		@Column
+		val coreVersion: String,
 
 		@Transient
 		@Column(timestamp = true)

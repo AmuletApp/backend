@@ -17,7 +17,7 @@ fun Routing.configureAnalytics() {
 		val pluginInstall: PluginAnalytics.PluginInstall?,
 		val pluginUninstall: PluginAnalytics.PluginUninstall?,
 		val install: InstallAnalytics.Install? = null,
-		val launch: AppAnalytics.Launch? = null,
+		val appLaunch: AppAnalytics.Launch? = null,
 	)
 
 	post<Science> { data ->
@@ -37,10 +37,10 @@ fun Routing.configureAnalytics() {
 					.getWriteKotlinApi()
 					.writeMeasurement(data.install, WritePrecision.MS)
 			}
-			if (data.launch != null) {
+			if (data.appLaunch != null) {
 				AppAnalytics.influx
 					.getWriteKotlinApi()
-					.writeMeasurement(data.launch, WritePrecision.MS)
+					.writeMeasurement(data.appLaunch, WritePrecision.MS)
 			}
 		}
 	}
