@@ -12,11 +12,9 @@ object RequestAnalytics {
 		override fun get(key: String) = null
 		override fun bucket() = "Requests"
 		override fun org() = "admin"
-		override fun token(): String =
-			System.getenv("INFLUX_TOKEN")
-
-		override fun step(): Duration =
-			Duration.ofSeconds(10)
+		override fun uri() = System.getenv("INFLUX_URL")
+		override fun token() = System.getenv("INFLUX_TOKEN")
+		override fun step() = Duration.ofSeconds(10)
 	}
 
 	val registry = InfluxMeterRegistry(config, Clock.SYSTEM)
