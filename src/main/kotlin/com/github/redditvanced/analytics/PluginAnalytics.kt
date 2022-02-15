@@ -16,8 +16,28 @@ object PluginAnalytics {
 	)
 
 	@Serializable
-	@Measurement(name = "plugin_launch")
-	data class PluginLaunch(
+	@Measurement(name = "plugin_install")
+	data class PluginInstall(
+		@Column(tag = true)
+		val author: String,
+
+		@Column(tag = true)
+		val version: String,
+
+		@Column(tag = true)
+		val firstTime: Boolean,
+
+		@Column
+		val plugin: String,
+
+		@Transient
+		@Column(timestamp = true)
+		val time: Instant = Instant.now(),
+	)
+
+	@Serializable
+	@Measurement(name = "plugin_uninstall")
+	data class PluginUninstall(
 		@Column(tag = true)
 		val author: String,
 
@@ -33,13 +53,16 @@ object PluginAnalytics {
 	)
 
 	@Serializable
-	@Measurement(name = "plugin_install")
-	data class PluginInstall(
+	@Measurement(name = "plugin_launch")
+	data class PluginLaunch(
 		@Column(tag = true)
 		val author: String,
 
 		@Column(tag = true)
 		val version: String,
+
+		@Column(tag = true)
+		val enabled: Boolean,
 
 		@Column
 		val plugin: String,

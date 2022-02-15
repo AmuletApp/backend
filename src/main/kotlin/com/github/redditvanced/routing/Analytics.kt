@@ -13,22 +13,24 @@ import kotlinx.coroutines.launch
 fun Routing.configureAnalytics() {
 	@Location("science")
 	data class Science(
-		val pluginInstall: PluginAnalytics.PluginInstall? = null,
-		val plugins: List<PluginAnalytics.PluginLaunch> = emptyList(),
+		val pluginLaunches: List<PluginAnalytics.PluginLaunch>?,
+		val pluginInstall: PluginAnalytics.PluginInstall?,
+		val pluginUninstall: PluginAnalytics.PluginUninstall?,
 		val install: InstallAnalytics.Install? = null,
 		val launch: AppAnalytics.Launch? = null,
 	)
 
 	post<Science> { data ->
-		if (data.plugins.size > 50) return@post
 		call.respond("")
 
 		launch {
 			PluginAnalytics.influx.getWriteKotlinApi().apply {
+				if (data.pluginLaunches?.isNotEmpty() == true)
+					writeMeasurements(data.pluginLaunches, WritePrecision.MS)
 				if (data.pluginInstall != null)
 					writeMeasurement(data.pluginInstall, WritePrecision.MS)
-				if (data.plugins.isNotEmpty())
-					writeMeasurements(data.plugins, WritePrecision.MS)
+				if (data.pluginUninstall != null)
+					writeMeasurement(data.pluginUninstall, WritePrecision.MS)
 			}
 			if (data.install != null) {
 				InstallAnalytics.influx
