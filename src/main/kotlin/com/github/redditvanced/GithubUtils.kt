@@ -2,6 +2,7 @@ package com.github.redditvanced
 
 import io.ktor.client.*
 import io.ktor.client.call.*
+import io.ktor.client.plugins.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
@@ -10,8 +11,17 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 object GithubUtils {
-	private val http = HttpClient()
 	private val githubToken = System.getenv("GITHUB_TOKEN")
+	val http = HttpClient().apply {
+		config {
+			defaultRequest {
+				header("Authorization", "bearer $githubToken")
+				header("Accept", "application/vnd.github.v3+json")
+				header("Content-Type", "application/json")
+			}
+		}
+	}
+
 	private val pluginStoreOwner = System.getenv("GITHUB_OWNER")
 	private val pluginStoreRepo = System.getenv("PLUGIN_STORE_REPO")
 
@@ -31,9 +41,6 @@ object GithubUtils {
 
 	suspend fun triggerPluginBuild(data: DispatchInputs) {
 		val res = http.post("https://api.github.com/repos/$pluginStoreOwner/$pluginStoreRepo/actions/workflows/build-plugin.yml/dispatches") {
-			header("Authorization", "bearer $githubToken")
-			header("Accept", "application/vnd.github.v3+json")
-			header("Content-Type", "application/json")
 			setBody(Json.encodeToString(DispatchWorkflow("master", data)))
 		}
 		if (!res.status.isSuccess())
@@ -85,8 +92,6 @@ object GithubUtils {
 		"""
 
 		val response = http.post("https://api.github.com/graphql") {
-			header("Authorization", "bearer $githubToken")
-			header("Accept", "application/vnd.github.v3+json")
 			setBody(gql)
 		}
 
