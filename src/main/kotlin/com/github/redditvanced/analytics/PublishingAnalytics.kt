@@ -8,8 +8,8 @@ import java.time.Instant
 
 object PublishingAnalytics {
 	private val influx = InfluxDBClientKotlinFactory.create(
-		System.getenv("INFLUX_URL"),
-		System.getenv("INFLUX_TOKEN").toCharArray(),
+		System.getProperty("INFLUX_URL"),
+		System.getProperty("INFLUX_TOKEN").toCharArray(),
 		"admin",
 		"Publishing",
 	)

@@ -22,9 +22,9 @@ import org.jetbrains.exposed.sql.transactions.transaction
 
 @OptIn(KtorExperimentalLocationsAPI::class)
 object Publishing {
-	val discord = RestClient(System.getenv("DISCORD_TOKEN"))
-	val publishChannel = Snowflake(System.getenv("DISCORD_PUBLISHING_CHANNEL_ID"))
-	val serverId = System.getenv("DISCORD_SERVER_ID")
+	val discord = RestClient(System.getProperty("DISCORD_TOKEN"))
+	val publishChannel = Snowflake(System.getProperty("DISCORD_PUBLISHING_CHANNEL_ID"))
+	val serverId = System.getProperty("DISCORD_SERVER_ID")
 	private val bannedPlugins = listOf("HelloWorld", "Template")
 
 	@Location("publish/{owner}/{repository}")

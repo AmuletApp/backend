@@ -69,6 +69,8 @@ dependencies {
 
 	// InfluxDB client
 	implementation("com.influxdb:influxdb-client-kotlin:4.1.0")
+
+	implementation("io.github.cdimascio", "dotenv-kotlin", "6.2.2")
 }
 
 tasks.withType<KotlinCompile> {

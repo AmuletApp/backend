@@ -3,4 +3,7 @@ build
 *.iml
 .gradle
 out
+
 data.db
+.env*
+!.env.default

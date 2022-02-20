@@ -31,7 +31,7 @@ private val json = Json {
 }
 
 fun Routing.configureGithubWebhook() {
-	val webhookKey = System.getenv("GITHUB_WEBHOOK_SECRET")
+	val webhookKey = System.getProperty("GITHUB_WEBHOOK_SECRET")
 	if (webhookKey == null) {
 		application.log.warn("Missing GITHUB_WEBHOOK_SECRET, disabling Github webhooks!")
 		return

@@ -15,8 +15,8 @@ object BackendAnalytics {
 		override fun get(key: String) = null
 		override fun bucket() = "Backend"
 		override fun org() = "admin"
-		override fun uri() = System.getenv("INFLUX_URL")
-		override fun token() = System.getenv("INFLUX_TOKEN")
+		override fun uri() = System.getProperty("INFLUX_URL")
+		override fun token() = System.getProperty("INFLUX_TOKEN")
 		override fun step() = Duration.ofSeconds(10)
 	}
 	private val registry = InfluxMeterRegistry(config, Clock.SYSTEM)

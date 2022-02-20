@@ -21,10 +21,10 @@ import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 
 object DiscordInteractions {
-	private val verifier = InteractionRequestVerifier(System.getenv("DISCORD_PUBLIC_KEY"))
+	private val verifier = InteractionRequestVerifier(System.getProperty("DISCORD_PUBLIC_KEY"))
 	private val btnIdRegex = "^publishRequest-(\\d+)-(approve|deny|noci)$".toRegex()
 	private val allowedRoles = System
-		.getenv("PLUGIN_PUBLISH_REQUESTS_ALLOWED_VERIFY_ROLES")
+		.getProperty("DISCORD_PUBLISHING_APPROVING_ROLES")
 		.split(',')
 		.map { it.toULongOrNull() ?: throw IllegalArgumentException("Failed to parse verify role ids!") }
 

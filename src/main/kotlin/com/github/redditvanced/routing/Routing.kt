@@ -52,8 +52,8 @@ fun Application.configureRouting() {
 			if (call.request.userAgent() != "RedditVanced")
 				call.respond(HttpStatusCode.NotFound, "")
 			else call.respond(AccountCredentialsModel(
-				System.getenv("GOOGLE_EMAIL"),
-				System.getenv("GOOGLE_PASSWORD")
+				System.getProperty("GOOGLE_EMAIL"),
+				System.getProperty("GOOGLE_PASSWORD")
 			))
 		}
 	}

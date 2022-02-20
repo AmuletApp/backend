@@ -12,8 +12,8 @@ object RequestAnalytics {
 		override fun get(key: String) = null
 		override fun bucket() = "Requests"
 		override fun org() = "admin"
-		override fun uri() = System.getenv("INFLUX_URL")
-		override fun token() = System.getenv("INFLUX_TOKEN")
+		override fun uri() = System.getProperty("INFLUX_URL")
+		override fun token() = System.getProperty("INFLUX_TOKEN")
 		override fun step() = Duration.ofSeconds(10)
 	}
 

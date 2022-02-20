@@ -11,7 +11,7 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 
 object GithubUtils {
-	private val githubToken = System.getenv("GITHUB_TOKEN")
+	private val githubToken = System.getProperty("GITHUB_TOKEN")
 	val http = HttpClient().apply {
 		config {
 			defaultRequest {
@@ -22,8 +22,8 @@ object GithubUtils {
 		}
 	}
 
-	private val pluginStoreOwner = System.getenv("GITHUB_OWNER")
-	private val pluginStoreRepo = System.getenv("PLUGIN_STORE_REPO")
+	private val pluginStoreOwner = System.getProperty("PLUGIN_STORE_ORG")
+	private val pluginStoreRepo = System.getProperty("PLUGIN_STORE_REPO")
 
 	@Serializable
 	private data class DispatchWorkflow(
