@@ -1,6 +1,7 @@
 package com.github.redditvanced.routing
 
 import com.github.redditvanced.GithubUtils
+import com.github.redditvanced.GithubUtils.DispatchInputs
 import com.github.redditvanced.database.PluginRepo
 import com.github.redditvanced.database.PublishRequest
 import com.github.redditvanced.modals.respondError
@@ -25,7 +26,7 @@ import java.util.zip.ZipInputStream
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
-val json = Json {
+private val json = Json {
 	ignoreUnknownKeys = true
 }
 
@@ -43,7 +44,7 @@ fun Routing.configureGithubWebhook() {
 		HexFormat.of().formatHex(mac.doFinal(data.toByteArray()))
 
 	post("github") {
-		// Verify request came from Github
+		// Verify request came from GitHub
 		val signature = call.request.header("X-Hub-Signature")
 		val body = call.receiveText()
 		val computed = "sha1=${sign(body)}"
@@ -61,7 +62,7 @@ fun Routing.configureGithubWebhook() {
 			return@post
 		val model = json.decodeFromJsonElement<WebhookWorkflowModel>(data)
 
-		// Extract workflow inputs by downloading its log (ref: Echo Inputs step)
+		// Extract workflow inputs by downloading the workflow log (refer to: "Echo Inputs" workflow step)
 		// This is the best way I found to do this since the GitHub API doesn't provide inputs
 		val inputs = try {
 			extractWorkflowInputs(model.workflow_run)
@@ -145,14 +146,7 @@ fun Routing.configureGithubWebhook() {
 	}
 }
 
-private data class WorkflowInputs(
-	val owner: String,
-	val repository: String,
-	val plugin: String,
-	val commit: String,
-)
-
-private suspend fun extractWorkflowInputs(run: WorkflowRun): WorkflowInputs = withContext(Dispatchers.IO) {
+private suspend fun extractWorkflowInputs(run: WorkflowRun): DispatchInputs = withContext(Dispatchers.IO) {
 	val bytes = GithubUtils.http.get(run.logs_url).body<ByteArray>()
 	val zip = ZipInputStream(bytes.inputStream())
 
@@ -167,7 +161,7 @@ private suspend fun extractWorkflowInputs(run: WorkflowRun): WorkflowInputs = wi
 				?: throw Error("Could not find inputs in workflow log!")
 
 			val (owner, repository, plugin, commit) = results.destructured
-			return@withContext WorkflowInputs(owner, repository, plugin, commit)
+			return@withContext DispatchInputs(owner, repository, plugin, commit)
 		}
 	}
 
