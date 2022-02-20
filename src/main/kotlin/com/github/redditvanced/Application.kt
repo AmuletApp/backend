@@ -1,6 +1,5 @@
 package com.github.redditvanced
 
-import com.github.redditvanced.analytics.BackendAnalytics
 import com.github.redditvanced.analytics.RequestAnalytics
 import com.github.redditvanced.migrations.M001
 import com.github.redditvanced.routing.configureRouting
@@ -43,8 +42,6 @@ fun main() {
 		exposedLogger.info("Shutting down...")
 		database.connector().close()
 	})
-
-	BackendAnalytics.start()
 
 	val server = embeddedServer(Netty, port = 8080, host = "0.0.0.0") {
 		configureRouting()
