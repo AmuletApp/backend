@@ -8,7 +8,6 @@ import com.github.redditvanced.routing.publishing.configureGithubWebhook
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
 import io.ktor.server.application.*
-import io.ktor.server.http.content.*
 import io.ktor.server.locations.*
 import io.ktor.server.plugins.*
 import io.ktor.server.request.*
@@ -40,10 +39,6 @@ fun Application.configureRouting() {
 		configurePublishing()
 		configureDiscordInteractions()
 		configureGithubWebhook()
-
-		static {
-			resource("/robots.txt", "robots.txt")
-		}
 
 		get("/") {
 			call.respondText("Hi! :)")
