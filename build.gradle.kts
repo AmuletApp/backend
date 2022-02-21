@@ -1,7 +1,7 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-	application
+	id("application")
 	kotlin("jvm") version "1.6.10"
 	id("org.jetbrains.kotlin.plugin.serialization") version "1.6.10"
 	id("com.github.johnrengelman.shadow") version "5.2.0"
@@ -81,7 +81,7 @@ tasks.withType<KotlinCompile> {
 }
 
 application {
-	mainClass.set("com.github.redditvanced.MainKt")
+	mainClassName = "com.github.redditvanced.MainKt"
 }
 
 java {

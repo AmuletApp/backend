@@ -26,7 +26,10 @@ fun main() {
 		database.connector().close()
 	})
 
-	val server = embeddedServer(Netty, port = 8080, host = "0.0.0.0") {
+	val port = System.getProperty("PORT").toIntOrNull()?.takeIf { it <= 65535 }
+		?: throw IllegalArgumentException("Configured port is invalid!")
+
+	val server = embeddedServer(Netty, port, "127.0.0.1") {
 		configureRouting()
 
 		install(CallLogging) {
