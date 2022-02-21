@@ -1,10 +1,10 @@
 package com.github.redditvanced
 
 import com.github.redditvanced.analytics.RequestAnalytics
-import com.github.redditvanced.migrations.M001
+import com.github.redditvanced.migrations.M001_Publishing
 import com.github.redditvanced.routing.configureRouting
+import com.github.redditvanced.utils.DotEnv
 import gay.solonovamax.exposed.migrations.runMigrations
-import io.github.cdimascio.dotenv.dotenv
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.metrics.micrometer.*
@@ -14,29 +14,12 @@ import io.ktor.server.request.*
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.exposedLogger
 import org.slf4j.event.Level
-import java.io.File
-import kotlin.system.exitProcess
 
 fun main() {
-	// Load env variables
-	val env = File(".env.local")
-	if (!env.exists()) {
-		val classLoader = M001::class.java.classLoader
-		val defaultEnvUri = classLoader.getResource(".env.default")
-			?: error("Failed to load default config from jar")
-		env.writeText(defaultEnvUri.readText())
-
-		println("env config missing, generating and exiting. Please fill out the configuration and retry.")
-		exitProcess(1)
-	}
-
-	dotenv {
-		filename = ".env.local"
-		systemProperties = true
-	}
+	DotEnv.loadDotEnv()
 
 	val database = Database.connect("jdbc:sqlite:./data.db")
-	runMigrations(listOf(M001()))
+	runMigrations(listOf(M001_Publishing()))
 
 	Runtime.getRuntime().addShutdownHook(Thread {
 		exposedLogger.info("Shutting down...")

@@ -1,4 +1,4 @@
-package com.github.redditvanced
+package com.github.redditvanced.utils
 
 import io.ktor.client.*
 import io.ktor.client.call.*

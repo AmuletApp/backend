@@ -1,6 +1,6 @@
-package com.github.redditvanced.routing
+package com.github.redditvanced.routing.publishing
 
-import com.github.redditvanced.GithubUtils
+import com.github.redditvanced.utils.GithubUtils
 import com.github.redditvanced.analytics.PublishingAnalytics
 import com.github.redditvanced.database.PluginRepo
 import com.github.redditvanced.database.PublishRequest

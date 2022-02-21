@@ -75,15 +75,16 @@ dependencies {
 
 tasks.withType<KotlinCompile> {
 	kotlinOptions {
+		jvmTarget = "17"
 		freeCompilerArgs = freeCompilerArgs + "-opt-in=kotlin.RequiresOptIn"
 	}
 }
 
 application {
-	mainClassName = "com.github.redditvanced.ApplicationKt"
+	mainClass.set("com.github.redditvanced.MainKt")
 }
 
 java {
-	sourceCompatibility = JavaVersion.VERSION_16
-	targetCompatibility = JavaVersion.VERSION_16
+	sourceCompatibility = JavaVersion.VERSION_17
+	targetCompatibility = JavaVersion.VERSION_17
 }

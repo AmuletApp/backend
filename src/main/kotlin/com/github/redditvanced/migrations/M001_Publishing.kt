@@ -5,7 +5,7 @@ import org.jetbrains.exposed.dao.id.IntIdTable
 import org.jetbrains.exposed.sql.SchemaUtils
 import org.jetbrains.exposed.sql.Transaction
 
-class M001 : Migration() {
+class M001_Publishing : Migration() {
 	private object PublishRequest : IntIdTable("publish_requests") {
 		init {
 			varchar("owner", 39, "NOCASE")

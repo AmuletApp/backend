@@ -1,6 +1,6 @@
-package com.github.redditvanced.routing
+package com.github.redditvanced.routing.publishing
 
-import com.github.redditvanced.GithubUtils
+import com.github.redditvanced.utils.GithubUtils
 import com.github.redditvanced.database.PublishRequest
 import com.github.redditvanced.modals.respondError
 import dev.kord.common.entity.*
