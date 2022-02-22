@@ -72,6 +72,10 @@ fun Routing.configureGithubWebhook() {
 		}
 		val workflowConclusion = model.workflow_run.conclusion
 
+		// TODO: support cancelled workflow runs
+		if (workflowConclusion != "failure" && workflowConclusion != "success")
+			return@post
+
 		// Fetch publish request, check exists
 		val publishRequest = transaction {
 			PublishRequest.select {
@@ -113,14 +117,16 @@ fun Routing.configureGithubWebhook() {
 						content = ":green_circle: Build success"
 						components = mutableListOf()
 					}
-					else -> throw IllegalStateException("Invalid workflow conclusion $workflowConclusion")
 				}
 			}
 		} catch (t: Throwable) {
 			application.log.error("Failed to edit message after workflow run ($workflowConclusion). $model. " +
-				"Message: https://discord.com/${Publishing.serverId}/${Publishing.publishChannel}/$messageId")
+				"Message: https://discord.com/${Publishing.serverId}/${Publishing.publishChannel}/$messageId", t)
 			return@post
 		}
+
+		if (workflowConclusion != "success")
+			return@post
 
 		// Update approved commits & delete request
 		val expr = PluginRepo.owner eq inputs.owner and
