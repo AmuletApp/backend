@@ -1,13 +1,16 @@
 package com.github.redditvanced.routing.publishing
 
-import com.github.redditvanced.utils.GithubUtils
 import com.github.redditvanced.analytics.PublishingAnalytics
 import com.github.redditvanced.database.PluginRepo
 import com.github.redditvanced.database.PublishRequest
+import com.github.redditvanced.database.PublishRequest.targetCommit
 import com.github.redditvanced.modals.respondError
+import com.github.redditvanced.utils.GithubUtils
 import dev.kord.common.entity.Snowflake
 import dev.kord.rest.builder.message.EmbedBuilder
 import dev.kord.rest.service.RestClient
+import io.ktor.client.plugins.*
+import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.locations.*
@@ -28,11 +31,10 @@ object Publishing {
 	private val bannedPlugins = listOf("HelloWorld", "Template")
 
 	@Location("publish/{owner}/{repository}")
-	private data class PublishRequestRoute(
+	data class PublishRequestRoute(
 		val owner: String,
 		val repository: String,
 		val plugin: String,
-		val targetCommit: String,
 	)
 
 	fun Routing.configurePublishing() {
@@ -40,6 +42,16 @@ object Publishing {
 			// Check for generic plugin names
 			if (data.plugin in bannedPlugins) {
 				call.respondError("The ${data.plugin} plugin is banned from being published!", HttpStatusCode.BadRequest)
+				return@post
+			}
+
+			// Fetch the head commit of the default branch on the repo
+			val commit = try {
+				val (commits) = GithubUtils.getCommits(data.owner, data.repository, 1)
+				commits.single()
+			} catch (t: Throwable) {
+				application.log.info("Failed to retrieve commits for ${data.owner}/${data.repository}: ${t.message}")
+				call.respondError("Internal Server Error", HttpStatusCode.InternalServerError)
 				return@post
 			}
 
@@ -79,7 +91,7 @@ object Publishing {
 					// Update the target commit to approve in DB and increment updates counter
 					transaction {
 						PublishRequest.update({ PublishRequest.id eq requestId }) {
-							it[targetCommit] = data.targetCommit
+							it[targetCommit] = commit
 							it[updates] = updates + 1
 						}
 					}
@@ -115,14 +127,14 @@ object Publishing {
 						it[owner] = data.owner
 						it[repo] = data.repository
 						it[plugin] = data.plugin
-						it[targetCommit] = data.targetCommit
+						it[targetCommit] = commit
 					}.value
 				}
 
 				// Send new publish request message
 				val message = discord.channel.createMessage(publishChannel) {
 					content = "Awaiting approval..."
-					embeds += buildRequestEmbed(data, 0, lastApprovedCommit, lastSharedCommit)
+					embeds += buildRequestEmbed(data, commit, 0, lastApprovedCommit, lastSharedCommit)
 					components += buildRequestButtons(newRequestId, false)
 				}
 
@@ -138,6 +150,7 @@ object Publishing {
 				discord.channel.editMessage(publishChannel, Snowflake(existingMessageId)) {
 					embeds = mutableListOf(buildRequestEmbed(
 						data,
+						commit,
 						existingRequest!![PublishRequest.updates] + 1,
 						lastApprovedCommit,
 						lastSharedCommit
@@ -148,11 +161,15 @@ object Publishing {
 
 			// Record plugin publishing analytics
 			launch {
-				PublishingAnalytics.record(PublishingAnalytics.Publish(
-					data.owner,
-					data.plugin,
-					knownCommits == null && existingRequest == null
-				))
+				try {
+					PublishingAnalytics.record(PublishingAnalytics.Publish(
+						data.owner,
+						data.plugin,
+						knownCommits == null && existingRequest == null
+					))
+				} catch (t: Throwable) {
+					application.log.error("Failed to write publishing analytics: ${t.message}")
+				}
 			}
 
 			@Serializable
@@ -165,11 +182,12 @@ object Publishing {
 
 	private suspend fun buildRequestEmbed(
 		data: PublishRequestRoute,
+		commit: String,
 		updates: Int,
 		lastApprovedCommit: String?,
 		lastSharedCommit: String?,
 	) = EmbedBuilder().apply {
-		val (owner, repo, plugin, commit) = data
+		val (owner, repo, plugin) = data
 
 		url = "https://github.com/$owner/$repo"
 		title = "$owner/$repo -> $plugin"
