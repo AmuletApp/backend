@@ -1,10 +1,10 @@
 package com.github.redditvanced.routing.publishing
 
-import com.github.redditvanced.utils.GithubUtils
-import com.github.redditvanced.utils.GithubUtils.DispatchInputs
 import com.github.redditvanced.database.PluginRepo
 import com.github.redditvanced.database.PublishRequest
 import com.github.redditvanced.modals.respondError
+import com.github.redditvanced.utils.GithubUtils
+import com.github.redditvanced.utils.GithubUtils.DispatchInputs
 import dev.kord.common.entity.Snowflake
 import io.ktor.client.call.*
 import io.ktor.client.request.*
@@ -18,11 +18,11 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.*
 import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.eq
 import org.jetbrains.exposed.sql.transactions.transaction
+import java.io.File
 import java.security.MessageDigest
 import java.util.*
-import java.util.zip.ZipInputStream
+import java.util.zip.ZipFile
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
 
@@ -40,7 +40,7 @@ fun Routing.configureGithubWebhook() {
 	val key = SecretKeySpec(webhookKey.toByteArray(), "HmacSHA1")
 	val mac = Mac.getInstance("HmacSHA1").apply { init(key) }
 
-	fun sign(data: String) =
+	fun sign(data: String): String =
 		HexFormat.of().formatHex(mac.doFinal(data.toByteArray()))
 
 	post("github") {
@@ -67,6 +67,7 @@ fun Routing.configureGithubWebhook() {
 		val inputs = try {
 			extractWorkflowInputs(model.workflow_run)
 		} catch (t: Throwable) {
+			application.log.error("Failed to extract workflow inputs!", t)
 			return@post
 		}
 		val workflowConclusion = model.workflow_run.conclusion
@@ -148,24 +149,21 @@ fun Routing.configureGithubWebhook() {
 
 private suspend fun extractWorkflowInputs(run: WorkflowRun): DispatchInputs = withContext(Dispatchers.IO) {
 	val bytes = GithubUtils.http.get(run.logs_url).body<ByteArray>()
-	val zip = ZipInputStream(bytes.inputStream())
+	val file = File("workflow-${UUID.randomUUID()}")
+	file.writeBytes(bytes)
+	val zip = ZipFile(file)
 
-	while (true) {
-		val entry = zip.nextEntry ?: break
-		println(entry.name)
-		if (entry.name == "build/2_Echo_Inputs") {
-			val log = zip.readNBytes(entry.size.toInt()).decodeToString()
-			zip.close()
+	val entry = zip.getEntry("build/3_Echo Inputs.txt")
+	val log = zip.getInputStream(entry).readBytes().decodeToString()
 
-			val results = "owner:(.+?);repository:(.+?);plugin:(.+?);commit:(.+?);".toRegex().find(log)
-				?: throw Error("Could not find inputs in workflow log!")
+	zip.close()
+	file.delete()
 
-			val (owner, repository, plugin, commit) = results.destructured
-			return@withContext DispatchInputs(owner, repository, plugin, commit)
-		}
-	}
+	val results = "owner:(.+?);repository:(.+?);plugin:(.+?);commit:(.+?);$".toRegex(RegexOption.MULTILINE).find(log)
+		?: throw Error("Could not find inputs in workflow log!")
 
-	throw Error("Could not find step 2 in Github logs!")
+	val (owner, repository, plugin, commit) = results.destructured
+	DispatchInputs(owner, repository, plugin, commit)
 }
 
 @Serializable

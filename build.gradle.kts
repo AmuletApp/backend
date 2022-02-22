@@ -1,10 +1,10 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-	id("application")
 	kotlin("jvm") version "1.6.10"
 	id("org.jetbrains.kotlin.plugin.serialization") version "1.6.10"
 	id("com.github.johnrengelman.shadow") version "5.2.0"
+	id("application")
 }
 
 group = "com.github.redditvanced"
@@ -61,7 +61,7 @@ dependencies {
 
 	// GPlay API
 	implementation("com.github.theapache64:google-play-api:0.0.9")
-	implementation("com.google.protobuf:protobuf-java:3.19.3")
+	implementation("com.google.protobuf:protobuf-java:3.19.4")
 
 	// Kord
 	implementation("com.github.RedditVanced.kord:kord-rest:feature~ktor-2-SNAPSHOT")
