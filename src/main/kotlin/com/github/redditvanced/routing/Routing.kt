@@ -35,13 +35,11 @@ fun Application.configureRouting() {
 	}
 
 	routing {
-		configureAnalytics()
-		configurePublishing()
-		configureDiscordInteractions()
-		configureGithubWebhook()
-
-		get("/") {
-			call.respondText("Hi! :)")
+		route("/redditvanced") {
+			configureAnalytics()
+			configurePublishing()
+			configureDiscordInteractions()
+			configureGithubWebhook()
 		}
 
 		get("google") {

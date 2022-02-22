@@ -29,7 +29,7 @@ object DiscordInteractions {
 		.map { it.toULongOrNull() ?: throw IllegalArgumentException("Failed to parse verify role ids!") }
 
 	@OptIn(KtorExperimentalLocationsAPI::class)
-	fun Routing.configureDiscordInteractions() {
+	fun Route.configureDiscordInteractions() {
 		val json = Json {
 			ignoreUnknownKeys = true
 		}

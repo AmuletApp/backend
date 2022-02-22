@@ -34,7 +34,7 @@ object Publishing {
 		val plugin: String,
 	)
 
-	fun Routing.configurePublishing() {
+	fun Route.configurePublishing() {
 		post<PublishRequestRoute> { data ->
 			// Check for generic plugin names
 			if (data.plugin in bannedPlugins) {

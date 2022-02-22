@@ -10,7 +10,7 @@ import io.ktor.server.routing.post
 import kotlinx.coroutines.launch
 
 @OptIn(KtorExperimentalLocationsAPI::class)
-fun Routing.configureAnalytics() {
+fun Route.configureAnalytics() {
 	@Location("science")
 	data class Science(
 		val pluginLaunches: List<PluginAnalytics.PluginLaunch>?,
