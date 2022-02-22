@@ -1,8 +1,8 @@
 package com.github.redditvanced.routing.publishing
 
-import com.github.redditvanced.utils.GithubUtils
 import com.github.redditvanced.database.PublishRequest
 import com.github.redditvanced.modals.respondError
+import com.github.redditvanced.utils.GithubUtils
 import dev.kord.common.entity.*
 import dev.kord.common.entity.optional.optional
 import dev.kord.rest.builder.component.ActionRowBuilder
@@ -105,16 +105,13 @@ object DiscordInteractions {
 				InteractionResponseCreateRequest(
 					type = InteractionResponseType.UpdateMessage,
 					InteractionApplicationCommandCallbackData(
-						content = "Building...".optional(),
-						components = listOf(DiscordComponent(
-							type = ComponentType.ActionRow,
-							components = listOf(buildRequestButtons(id, true).build()).optional()
-						)).optional()
+						content = ":orange_circle: Building...".optional(),
+						components = listOf(buildRequestButtons(id, true).build()).optional()
 					).optional()
 				)
 			} catch (t: Throwable) {
 				t.printStackTrace()
-				ephemeralResponse(t.message ?: "An unknown error occurred!")
+				ephemeralResponse("An error occurred!")
 			}
 		}
 	}
