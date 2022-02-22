@@ -3,14 +3,11 @@ package com.github.redditvanced.routing.publishing
 import com.github.redditvanced.analytics.PublishingAnalytics
 import com.github.redditvanced.database.PluginRepo
 import com.github.redditvanced.database.PublishRequest
-import com.github.redditvanced.database.PublishRequest.targetCommit
 import com.github.redditvanced.modals.respondError
 import com.github.redditvanced.utils.GithubUtils
 import dev.kord.common.entity.Snowflake
 import dev.kord.rest.builder.message.EmbedBuilder
 import dev.kord.rest.service.RestClient
-import io.ktor.client.plugins.*
-import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.server.application.*
 import io.ktor.server.locations.*

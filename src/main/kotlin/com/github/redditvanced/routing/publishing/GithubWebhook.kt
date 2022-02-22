@@ -99,9 +99,7 @@ fun Routing.configureGithubWebhook() {
 			)
 		} catch (t: Throwable) {
 			// Delete request if message gone
-			transaction {
-				PublishRequest.deleteWhere { PublishRequest.id eq publishRequestId }
-			}
+			transaction { PublishRequest.deleteById(publishRequestId) }
 			return@post
 		}
 
@@ -129,17 +127,21 @@ fun Routing.configureGithubWebhook() {
 			return@post
 
 		// Update approved commits & delete request
-		val expr = PluginRepo.owner eq inputs.owner and
-			(PluginRepo.repo eq inputs.plugin)
-		val repoExists = transaction {
-			PublishRequest.deleteWhere { PublishRequest.id eq publishRequestId }
-			PluginRepo.slice(PluginRepo.id).select(expr).singleOrNull() != null
+		val repoId = transaction {
+			PublishRequest.deleteById(publishRequestId)
+
+			with(PluginRepo) {
+				slice(id)
+					.select { owner eq inputs.owner and (repo eq inputs.plugin) }
+					.singleOrNull()
+					?.get(id)
+			}
 		}
 
 		val (commits) = GithubUtils.getCommits(inputs.owner, inputs.repository, 100)
 		transaction {
-			if (repoExists) {
-				PluginRepo.update({ expr }) {
+			if (repoId != null) {
+				PluginRepo.update({ PluginRepo.id eq repoId }) {
 					it[approvedCommits] = commits.joinToString(",")
 				}
 			} else {
