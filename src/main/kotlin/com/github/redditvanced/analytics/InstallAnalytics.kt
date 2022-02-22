@@ -15,7 +15,6 @@ object InstallAnalytics {
 		System.getProperty("INFLUX_URL"),
 		System.getProperty("INFLUX_TOKEN").toCharArray(),
 		"admin",
-		"Devices",
 	)
 
 	/**

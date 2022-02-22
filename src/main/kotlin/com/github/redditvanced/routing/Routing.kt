@@ -36,7 +36,7 @@ fun Application.configureRouting() {
 
 	routing {
 		route("/redditvanced") {
-			configureAnalytics()
+			configureAnalytics("RedditVanced")
 			configurePublishing()
 			configureDiscordInteractions()
 			configureGithubWebhook()

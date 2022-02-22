@@ -11,7 +11,6 @@ object PublishingAnalytics {
 		System.getProperty("INFLUX_URL"),
 		System.getProperty("INFLUX_TOKEN").toCharArray(),
 		"admin",
-		"Publishing",
 	)
 
 	suspend fun record(data: Publish) =
