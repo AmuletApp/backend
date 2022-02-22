@@ -206,7 +206,7 @@ object Publishing {
 		description = """
 			❯ Info
 			• Compare: ${if (lastSharedCommit != null) "[Github]($diffUrl)" else "New repository ✨"}
-			• Target commit: `$commit` + previous (if any)
+			• Target commit: `$commit`
 			• Request updates: $updates
 
 			❯ History
@@ -214,7 +214,7 @@ object Publishing {
 			• Last shared commit: `${lastSharedCommit ?: "N/A"}`
 			${if (lastApprovedCommit != lastSharedCommit) "• Force push detected!" else ""}
 
-			${if (diffs != null && diffs.length <= 4000) "❯ Changes\n$diffs" else ""}
+			${if (diffs != null && diffs.length in (1..4000)) "❯ Changes\n$diffs" else ""}
 		""".trimIndent()
 	}
 }
