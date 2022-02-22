@@ -6,19 +6,20 @@ import io.ktor.client.plugins.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
+import io.ktor.serialization.kotlinx.json.*
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.*
 
 object GithubUtils {
 	private val githubToken = System.getProperty("GITHUB_TOKEN")
-	val http = HttpClient().apply {
-		config {
-			defaultRequest {
-				header("Authorization", "bearer $githubToken")
-				header("Accept", "application/vnd.github.v3+json")
-				header("Content-Type", "application/json")
-			}
+	val http = HttpClient {
+		defaultRequest {
+			header("Authorization", "token $githubToken")
+			header("Accept", "application/vnd.github.v3+json")
+			header("Content-Type", "application/json")
+		}
+		install(ContentNegotiation) {
+			json()
 		}
 	}
 
@@ -41,7 +42,7 @@ object GithubUtils {
 
 	suspend fun triggerPluginBuild(data: DispatchInputs) {
 		val res = http.post("https://api.github.com/repos/$pluginStoreOwner/$pluginStoreRepo/actions/workflows/build-plugin.yml/dispatches") {
-			setBody(Json.encodeToString(DispatchWorkflow("master", data)))
+			setBody(DispatchWorkflow("master", data))
 		}
 		if (!res.status.isSuccess())
 			throw Error("Failed to run plugin build workflow for ${data.owner}/${data.repository}: ${res.status} ${res.bodyAsText()}")
@@ -69,7 +70,7 @@ object GithubUtils {
 	@Suppress("UNCHECKED_CAST")
 	suspend fun getCommits(owner: String, repo: String, amount: Int, after: String? = null): Pair<List<String>, Boolean> {
 		val gql = """
-			{
+			query {
 			  repository(owner: "$owner", name: "$repo") {
 			    defaultBranchRef {
 			      target {
@@ -92,21 +93,28 @@ object GithubUtils {
 		"""
 
 		val response = http.post("https://api.github.com/graphql") {
-			setBody(gql)
+			val body = buildJsonObject {
+				put("query", gql)
+			}
+			setBody(body)
 		}
 
-		println("requesting github api")
+		val body = response.body<JsonElement>().jsonObject
 
-		// TODO: clean up this hot garbage
-		val data = response.body<Map<*, *>>() as Map<String, Map<String, Map<String, Map<String, Map<String, Map<String, *>>>>>>
+		if (body.containsKey("errors"))
+			throw Error(body["errors"]?.toString())
 
-		if (data.containsKey("errors"))
-			throw Error(data["errors"].toString())
+		val history = body["data"]!!
+			.jsonObject["repository"]!!
+			.jsonObject["defaultBranchRef"]!!
+			.jsonObject["target"]!!
+			.jsonObject["history"]!!.jsonObject
 
-		val history = data["data"]!!["repository"]!!["defaultBranchRef"]!!["target"]!!["history"]!!
-		val hasNextPage = (history["pageInfo"] as Map<*, *>)["hasNextPage"] as Boolean
-		val commits = (history["edges"] as List<*>)
-			.map { ((it as Map<*, *>)["node"] as Map<*, *>)["oid"] as String }
+		val hasNextPage = history["pageInfo"]!!.jsonObject["hasNextPage"]!!.jsonPrimitive.boolean
+		val commits = history["edges"]!!.jsonArray.map {
+			it.jsonObject["node"]!!.jsonObject["oid"]!!.jsonPrimitive.content
+		}
+
 		return commits to hasNextPage
 	}
 
