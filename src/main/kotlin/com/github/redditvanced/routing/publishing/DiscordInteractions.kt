@@ -1,5 +1,6 @@
 package com.github.redditvanced.routing.publishing
 
+import com.github.redditvanced.Config
 import com.github.redditvanced.database.PublishRequest
 import com.github.redditvanced.modals.respondError
 import com.github.redditvanced.utils.GithubUtils
@@ -21,7 +22,7 @@ import org.jetbrains.exposed.sql.select
 import org.jetbrains.exposed.sql.transactions.transaction
 
 object DiscordInteractions {
-	private val verifier = InteractionRequestVerifier(System.getProperty("DISCORD_PUBLIC_KEY"))
+	private val verifier = InteractionRequestVerifier(Config.Discord.publicKey)
 	private val btnIdRegex = "^publishRequest-(\\d+)-(approve|deny|noci)$".toRegex()
 	private val allowedRoles = System
 		.getProperty("DISCORD_PUBLISHING_APPROVING_ROLES")

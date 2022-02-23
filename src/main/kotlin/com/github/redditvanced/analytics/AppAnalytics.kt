@@ -1,5 +1,6 @@
 package com.github.redditvanced.analytics
 
+import com.github.redditvanced.Config
 import com.influxdb.annotations.Column
 import com.influxdb.annotations.Measurement
 import com.influxdb.client.kotlin.InfluxDBClientKotlinFactory
@@ -9,8 +10,8 @@ import java.time.Instant
 
 object AppAnalytics {
 	val influx = InfluxDBClientKotlinFactory.create(
-		System.getProperty("INFLUX_URL"),
-		System.getProperty("INFLUX_TOKEN").toCharArray(),
+		Config.InfluxDB.url,
+		Config.InfluxDB.token.toCharArray(),
 		"admin",
 	)
 

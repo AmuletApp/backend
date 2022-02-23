@@ -3,7 +3,6 @@ package com.github.redditvanced
 import com.github.redditvanced.analytics.RequestAnalytics
 import com.github.redditvanced.migrations.M001_Publishing
 import com.github.redditvanced.routing.configureRouting
-import com.github.redditvanced.utils.DotEnv
 import gay.solonovamax.exposed.migrations.runMigrations
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
@@ -16,7 +15,7 @@ import org.jetbrains.exposed.sql.exposedLogger
 import org.slf4j.event.Level
 
 fun main() {
-	DotEnv.loadDotEnv()
+	Config.init()
 
 	val database = Database.connect("jdbc:sqlite:./data.db")
 	runMigrations(listOf(M001_Publishing()))
@@ -26,10 +25,7 @@ fun main() {
 		database.connector().close()
 	})
 
-	val port = System.getProperty("PORT").toIntOrNull()?.takeIf { it <= 65535 }
-		?: throw IllegalArgumentException("Configured port is invalid!")
-
-	val server = embeddedServer(Netty, port, "127.0.0.1") {
+	val server = embeddedServer(Netty, Config.port, "127.0.0.1") {
 		configureRouting()
 
 		install(CallLogging) {

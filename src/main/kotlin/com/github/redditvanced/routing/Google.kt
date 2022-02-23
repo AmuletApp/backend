@@ -1,5 +1,6 @@
 package com.github.redditvanced.routing
 
+import com.github.redditvanced.Config
 import io.ktor.server.application.*
 import io.ktor.server.response.*
 import io.ktor.server.routing.*
@@ -12,8 +13,8 @@ private data class GoogleAccount(
 )
 
 private val credentials = GoogleAccount(
-	System.getProperty("GOOGLE_EMAIL"),
-	System.getProperty("GOOGLE_PASSWORD")
+	Config.Google.email,
+	Config.Google.password,
 )
 
 fun Route.configureGoogle() {

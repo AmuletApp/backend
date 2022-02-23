@@ -1,5 +1,6 @@
 package com.github.redditvanced.routing.publishing
 
+import com.github.redditvanced.Config
 import com.github.redditvanced.analytics.PublishingAnalytics
 import com.github.redditvanced.database.PluginRepo
 import com.github.redditvanced.database.PublishRequest
@@ -22,9 +23,7 @@ import org.jetbrains.exposed.sql.transactions.transaction
 
 @OptIn(KtorExperimentalLocationsAPI::class)
 object Publishing {
-	val discord = RestClient(System.getProperty("DISCORD_TOKEN"))
-	val publishChannel = Snowflake(System.getProperty("DISCORD_PUBLISHING_CHANNEL_ID"))
-	val serverId: String = System.getProperty("DISCORD_SERVER_ID")
+	val rest = RestClient(Config.Discord.token)
 	private val bannedPlugins = listOf("HelloWorld", "Template")
 
 	@Location("publish/{owner}/{repository}")
@@ -72,7 +71,7 @@ object Publishing {
 				val messageId = existingRequest[PublishRequest.messageId]
 				val message = if (messageId == null) null else {
 					try {
-						discord.channel.getMessage(publishChannel, Snowflake(messageId))
+						rest.channel.getMessage(Config.DiscordServer.publishingChannel, Snowflake(messageId))
 					} catch (t: Throwable) {
 						null
 					}
@@ -129,7 +128,7 @@ object Publishing {
 				}
 
 				// Send new publish request message
-				val message = discord.channel.createMessage(publishChannel) {
+				val message = rest.channel.createMessage(Config.DiscordServer.publishingChannel) {
 					content = "Awaiting approval..."
 					embeds += buildRequestEmbed(data, commit, 0, lastApprovedCommit, lastSharedCommit)
 					components += buildRequestButtons(newRequestId, false)
@@ -144,7 +143,7 @@ object Publishing {
 				message.id.value
 			} else {
 				// Edit the existing publish request message with new details
-				discord.channel.editMessage(publishChannel, Snowflake(existingMessageId)) {
+				rest.channel.editMessage(Config.DiscordServer.publishingChannel, Snowflake(existingMessageId)) {
 					embeds = mutableListOf(buildRequestEmbed(
 						data,
 						commit,
@@ -173,7 +172,7 @@ object Publishing {
 			data class Response(
 				val message: String,
 			)
-			call.respond(Response("Success! https://discord.com/$serverId/$publishChannel/$messageId"))
+			call.respond(Response("Success! https://discord.com/${Config.DiscordServer.id}/${Config.DiscordServer.publishingChannel}/$messageId"))
 		}
 	}
 

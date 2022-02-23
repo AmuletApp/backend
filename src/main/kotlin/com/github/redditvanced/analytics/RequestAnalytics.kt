@@ -1,5 +1,6 @@
 package com.github.redditvanced.analytics
 
+import com.github.redditvanced.Config
 import io.micrometer.core.instrument.Clock
 import io.micrometer.influx.InfluxConfig
 import io.micrometer.influx.InfluxMeterRegistry
@@ -12,8 +13,8 @@ object RequestAnalytics {
 		override fun get(key: String) = null
 		override fun bucket() = "Requests"
 		override fun org() = "admin"
-		override fun uri() = System.getProperty("INFLUX_URL")
-		override fun token() = System.getProperty("INFLUX_TOKEN")
+		override fun uri() = Config.InfluxDB.url
+		override fun token() = Config.InfluxDB.token
 		override fun step() = Duration.ofSeconds(10)
 	}
 

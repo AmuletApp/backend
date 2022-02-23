@@ -1,5 +1,6 @@
 package com.github.redditvanced.routing.publishing
 
+import com.github.redditvanced.Config
 import com.github.redditvanced.database.PluginRepo
 import com.github.redditvanced.database.PublishRequest
 import com.github.redditvanced.modals.respondError
@@ -31,13 +32,7 @@ private val json = Json {
 }
 
 fun Route.configureGithubWebhook() {
-	val webhookKey = System.getProperty("GITHUB_WEBHOOK_SECRET")
-	if (webhookKey == null) {
-		application.log.warn("Missing GITHUB_WEBHOOK_SECRET, disabling Github webhooks!")
-		return
-	}
-
-	val key = SecretKeySpec(webhookKey.toByteArray(), "HmacSHA1")
+	val key = SecretKeySpec(Config.GitHub.webhookSecret.toByteArray(), "HmacSHA1")
 	val mac = Mac.getInstance("HmacSHA1").apply { init(key) }
 
 	fun sign(data: String): String =
@@ -92,9 +87,9 @@ fun Route.configureGithubWebhook() {
 			?: return@post // TODO: handle this?
 
 		// Check Discord message still exists
-		val message = try {
-			Publishing.discord.channel.getMessage(
-				Publishing.publishChannel,
+		try {
+			Publishing.rest.channel.getMessage(
+				Config.DiscordServer.publishingChannel,
 				Snowflake(messageId)
 			)
 		} catch (t: Throwable) {
@@ -105,7 +100,7 @@ fun Route.configureGithubWebhook() {
 
 		// Update Discord message
 		try {
-			Publishing.discord.channel.editMessage(Publishing.publishChannel, Snowflake(messageId)) {
+			Publishing.rest.channel.editMessage(Config.DiscordServer.publishingChannel, Snowflake(messageId)) {
 				when (workflowConclusion) {
 					"failure" -> {
 						content = ":red_circle: **Build failure**\n<${model.workflow_run.html_url}>"
@@ -119,7 +114,7 @@ fun Route.configureGithubWebhook() {
 			}
 		} catch (t: Throwable) {
 			application.log.error("Failed to edit message after workflow run ($workflowConclusion). $model. " +
-				"Message: https://discord.com/${Publishing.serverId}/${Publishing.publishChannel}/$messageId", t)
+				"Message: https://discord.com/${Config.DiscordServer.id}/${Config.DiscordServer.publishingChannel}/$messageId", t)
 			return@post
 		}
 

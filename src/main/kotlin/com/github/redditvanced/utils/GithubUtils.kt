@@ -1,5 +1,6 @@
 package com.github.redditvanced.utils
 
+import com.github.redditvanced.Config
 import io.ktor.client.*
 import io.ktor.client.call.*
 import io.ktor.client.plugins.*
@@ -11,10 +12,9 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.*
 
 object GithubUtils {
-	private val githubToken = System.getProperty("GITHUB_TOKEN")
 	val http = HttpClient {
 		defaultRequest {
-			header("Authorization", "token $githubToken")
+			header("Authorization", "token ${Config.GitHub.token}")
 			header("Accept", "application/vnd.github.v3+json")
 			header("Content-Type", "application/json")
 		}
@@ -22,9 +22,6 @@ object GithubUtils {
 			json()
 		}
 	}
-
-	private val pluginStoreOwner = System.getProperty("PLUGIN_STORE_ORG")
-	private val pluginStoreRepo = System.getProperty("PLUGIN_STORE_REPO")
 
 	@Serializable
 	private data class DispatchWorkflow(
@@ -41,7 +38,9 @@ object GithubUtils {
 	)
 
 	suspend fun triggerPluginBuild(data: DispatchInputs) {
-		val res = http.post("https://api.github.com/repos/$pluginStoreOwner/$pluginStoreRepo/actions/workflows/build-plugin.yml/dispatches") {
+		val url = "https://api.github.com/repos/${Config.PluginStore.owner}/${Config.PluginStore.repository}" +
+			"/actions/workflows/build-plugin.yml/dispatches"
+		val res = http.post(url) {
 			setBody(DispatchWorkflow("master", data))
 		}
 		if (!res.status.isSuccess())
