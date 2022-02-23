@@ -194,10 +194,6 @@ object Publishing {
 		}
 
 		val diffUrl = "https://github.com/$owner/$repo/compare/$lastSharedCommit...$commit"
-		val diffs = if (lastSharedCommit == null) null else GithubUtils
-			.parseDiff("$diffUrl.diff")
-			.map { it.replace("```", "\\```") }
-			.joinToString("\n") { "```diff\n$it```" }
 
 		description = """
 			❯ Info
@@ -209,8 +205,6 @@ object Publishing {
 			• Last approved commit: ${if (lastApprovedCommit != null) "`$lastApprovedCommit`" else "None"}
 			• Last shared commit: `${lastSharedCommit ?: "N/A"}`
 			${if (lastApprovedCommit != lastSharedCommit) "• Force push detected!" else ""}
-
-			${if (diffs != null && diffs.length in (1..4000)) "❯ Changes\n$diffs" else ""}
 		""".trimIndent()
 	}
 }

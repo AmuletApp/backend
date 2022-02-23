@@ -116,11 +116,4 @@ object GithubUtils {
 
 		return commits to hasNextPage
 	}
-
-	private val diffRegex = "\\+\\+\\+ b\\/(.+?)(?:diff|\$)".toRegex(RegexOption.DOT_MATCHES_ALL)
-	suspend fun parseDiff(diffUrl: String): List<String> {
-		val diff = http.get(diffUrl).bodyAsText()
-		val matches = diffRegex.findAll(diff)
-		return matches.map { "+++ " + it.groups[1]!!.value }.toList()
-	}
 }
