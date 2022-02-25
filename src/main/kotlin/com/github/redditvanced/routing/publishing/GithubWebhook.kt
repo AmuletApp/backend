@@ -6,6 +6,7 @@ import com.github.redditvanced.database.PublishRequest
 import com.github.redditvanced.modals.respondError
 import com.github.redditvanced.utils.GithubUtils
 import com.github.redditvanced.utils.GithubUtils.DispatchInputs
+import com.github.redditvanced.utils.toBuilder
 import dev.kord.common.entity.Snowflake
 import io.ktor.client.call.*
 import io.ktor.client.request.*
@@ -87,7 +88,7 @@ fun Route.configureGithubWebhook() {
 			?: return@post // TODO: handle this?
 
 		// Check Discord message still exists
-		try {
+		val message = try {
 			Publishing.rest.channel.getMessage(
 				Config.DiscordServer.publishingChannel,
 				Snowflake(messageId)
@@ -101,16 +102,20 @@ fun Route.configureGithubWebhook() {
 		// Update Discord message
 		try {
 			Publishing.rest.channel.editMessage(Config.DiscordServer.publishingChannel, Snowflake(messageId)) {
+				val embed = message.embeds.single().toBuilder()
 				when (workflowConclusion) {
 					"failure" -> {
 						content = ":red_circle: **Build failure**\n<${model.workflow_run.html_url}>"
 						components = mutableListOf(buildRequestButtons(publishRequestId, false))
+						embed.color = Config.Colors.RED
 					}
 					"success" -> {
 						content = ":green_circle: Build success"
 						components = mutableListOf()
+						embed.color = Config.Colors.GREEN
 					}
 				}
+				embeds = mutableListOf(embed)
 			}
 		} catch (t: Throwable) {
 			application.log.error("Failed to edit message after workflow run ($workflowConclusion). $model. " +

@@ -189,6 +189,7 @@ object Publishing {
 
 		url = "https://github.com/$owner/$repo"
 		title = "$owner/$repo -> $plugin"
+		color = Config.Colors.YELLOW
 		githubAuthor(owner)
 
 		val diffUrl = "https://github.com/$owner/$repo/compare/$lastSharedCommit...$commit"

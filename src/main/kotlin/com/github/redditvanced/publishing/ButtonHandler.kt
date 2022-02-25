@@ -88,8 +88,10 @@ object ButtonHandler {
 				.message.value!!
 				.embeds.single()
 				.toBuilder()
-			embed.githubAuthor(inputs.owner)
-			// TODO: orange embed
+				.apply {
+					githubAuthor(inputs.owner)
+					color = Config.Colors.ORANGE
+				}
 
 			embeds = mutableListOf(embed)
 		}

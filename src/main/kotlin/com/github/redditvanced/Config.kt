@@ -1,5 +1,6 @@
 package com.github.redditvanced
 
+import dev.kord.common.Color
 import dev.kord.common.entity.Snowflake
 import io.github.cdimascio.dotenv.Dotenv
 import io.github.cdimascio.dotenv.dotenv
@@ -58,6 +59,14 @@ object Config {
 	object InfluxDB {
 		val url by lazyString("INFLUX_URL")
 		val token by lazyString("INFLUX_TOKEN")
+	}
+
+	object Colors {
+		val RED = Color(255, 92, 92)
+		val ORANGE = Color(247, 149, 84)
+		val GREEN = Color(76, 255, 76)
+		val YELLOW = Color(243, 213, 104)
+		// val DISCORD_GRAY = Color(47, 49, 54)
 	}
 
 	private fun lazyString(key: String): Lazy<String> = lazy {
