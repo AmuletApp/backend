@@ -2,13 +2,10 @@ package com.github.redditvanced.publishing
 
 import com.github.redditvanced.Config
 import com.github.redditvanced.database.PublishRequest
-import com.github.redditvanced.routing.publishing.Publishing
 import com.github.redditvanced.routing.publishing.buildRequestButtons
+import com.github.redditvanced.routing.publishing.githubAuthor
 import com.github.redditvanced.utils.GithubUtils
-import dev.kord.rest.builder.message.EmbedBuilder
-import net.perfectdreams.discordinteraktions.common.builder.message.embed
-import net.perfectdreams.discordinteraktions.common.builder.message.modify.InteractionOrFollowupMessageModifyBuilder
-import net.perfectdreams.discordinteraktions.common.builder.message.modify.MessageModifyStateHolder
+import com.github.redditvanced.utils.toBuilder
 import net.perfectdreams.discordinteraktions.common.components.ComponentContext
 import net.perfectdreams.discordinteraktions.common.components.GuildComponentContext
 import org.jetbrains.exposed.sql.select
@@ -84,11 +81,17 @@ object ButtonHandler {
 
 		// Update message / disable buttons
 		context.updateMessage {
-
 			content = "Building..."
 			components = mutableListOf(buildRequestButtons(requestId, true))
+
+			val embed = context.discordInteraction
+				.message.value!!
+				.embeds.single()
+				.toBuilder()
+			embed.githubAuthor(inputs.owner)
 			// TODO: orange embed
-			// embeds = context.discordInteraction.message.value!!.embeds
+
+			embeds = mutableListOf(embed)
 		}
 	}
 }

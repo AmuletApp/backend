@@ -178,7 +178,7 @@ object Publishing {
 		}
 	}
 
-	fun buildRequestEmbed(
+	private fun buildRequestEmbed(
 		data: PublishRequestRoute,
 		commit: String,
 		updates: Int,
@@ -189,11 +189,7 @@ object Publishing {
 
 		url = "https://github.com/$owner/$repo"
 		title = "$owner/$repo -> $plugin"
-		author {
-			icon = "https://github.com/$owner.png?s=32"
-			url = "https://github.com/$owner"
-			name = owner
-		}
+		githubAuthor(owner)
 
 		val diffUrl = "https://github.com/$owner/$repo/compare/$lastSharedCommit...$commit"
 
@@ -226,3 +222,12 @@ fun buildRequestButtons(requestId: Int, disabled: Boolean) =
 			this.disabled = disabled
 		}
 	}
+
+/**
+ * Configures an embed's author properties to display a GitHub user
+ */
+fun EmbedBuilder.githubAuthor(username: String) = author {
+	icon = "https://github.com/$username.png?s=32"
+	url = "https://github.com/$username"
+	name = username
+}
