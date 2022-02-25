@@ -6,7 +6,9 @@ import com.github.redditvanced.database.PluginRepo
 import com.github.redditvanced.database.PublishRequest
 import com.github.redditvanced.modals.respondError
 import com.github.redditvanced.utils.GithubUtils
+import dev.kord.common.entity.ButtonStyle
 import dev.kord.common.entity.Snowflake
+import dev.kord.rest.builder.component.ActionRowBuilder
 import dev.kord.rest.builder.message.EmbedBuilder
 import dev.kord.rest.service.RestClient
 import io.ktor.http.*
@@ -176,7 +178,7 @@ object Publishing {
 		}
 	}
 
-	private suspend fun buildRequestEmbed(
+	fun buildRequestEmbed(
 		data: PublishRequestRoute,
 		commit: String,
 		updates: Int,
@@ -208,3 +210,19 @@ object Publishing {
 		""".trimIndent()
 	}
 }
+
+fun buildRequestButtons(requestId: Int, disabled: Boolean) =
+	ActionRowBuilder().apply {
+		interactionButton(ButtonStyle.Success, "publishRequest-$requestId-approve") {
+			label = "Approve"
+			this.disabled = disabled
+		}
+		interactionButton(ButtonStyle.Secondary, "publishRequest-$requestId-noci") {
+			label = "Approve [No-CI]"
+			this.disabled = disabled
+		}
+		interactionButton(ButtonStyle.Danger, "publishRequest-$requestId-deny") {
+			label = "Deny"
+			this.disabled = disabled
+		}
+	}

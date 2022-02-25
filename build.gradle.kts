@@ -20,6 +20,7 @@ repositories {
 	}
 
 	mavenCentral()
+	maven("https://redditvanced.ddns.net/maven/releases")
 	maven("https://maven.pkg.jetbrains.space/public/p/ktor/eap")
 	maven("https://oss.sonatype.org/content/repositories/snapshots/")
 	maven("https://repo.perfectdreams.net/")
@@ -65,7 +66,7 @@ dependencies {
 
 	// Kord
 	implementation("com.github.RedditVanced.kord:kord-rest:feature~ktor-2-SNAPSHOT")
-	implementation("net.perfectdreams.discordinteraktions:requests-verifier:0.0.12-SNAPSHOT")
+	implementation("net.perfectdreams.discordinteraktions:webserver-ktor-kord:0.0.12-SNAPSHOT")
 
 	// InfluxDB client
 	implementation("com.influxdb:influxdb-client-kotlin:4.1.0")
