@@ -2,7 +2,7 @@ package com.github.redditvanced.routing
 
 import com.github.redditvanced.modals.respondError
 import com.github.redditvanced.routing.Discord.configureDiscord
-import com.github.redditvanced.routing.publishing.Publishing.configurePublishing
+import com.github.redditvanced.routing.Publishing.configurePublishing
 import com.github.redditvanced.routing.publishing.configureGithubWebhook
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*

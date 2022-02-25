@@ -2,8 +2,6 @@ package com.github.redditvanced.publishing
 
 import com.github.redditvanced.Config
 import com.github.redditvanced.database.PublishRequest
-import com.github.redditvanced.routing.publishing.buildRequestButtons
-import com.github.redditvanced.routing.publishing.githubAuthor
 import com.github.redditvanced.utils.GithubUtils
 import com.github.redditvanced.utils.toBuilder
 import net.perfectdreams.discordinteraktions.common.components.ComponentContext
@@ -73,7 +71,7 @@ object ButtonHandler {
 			publishRequest[PublishRequest.targetCommit]
 		)
 		try {
-			// GithubUtils.triggerPluginBuild(inputs)
+			GithubUtils.triggerPluginBuild(inputs)
 		} catch (t: Throwable) {
 			val (owner, repo) = inputs
 			logger.error("Failed to trigger plugin build workflow! $owner/$repo", t)

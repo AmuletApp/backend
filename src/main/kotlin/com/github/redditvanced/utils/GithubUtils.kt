@@ -8,8 +8,13 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import io.ktor.serialization.kotlinx.json.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.*
+import java.io.File
+import java.util.*
+import java.util.zip.ZipFile
 
 object GithubUtils {
 	val http = HttpClient {
@@ -116,4 +121,41 @@ object GithubUtils {
 
 		return commits to hasNextPage
 	}
+
+	private val workflowInputsRegex = "owner:(.+?);repository:(.+?);plugin:(.+?);commit:(.+?);$".toRegex(RegexOption.MULTILINE)
+	suspend fun extractWorkflowInputs(run: WorkflowRun): DispatchInputs {
+		return withContext(Dispatchers.IO) {
+			val bytes = http.get(run.logs_url).body<ByteArray>()
+			val file = File("workflow-${UUID.randomUUID()}")
+			file.writeBytes(bytes)
+			val zip = ZipFile(file)
+
+			val entry = zip.getEntry("build/3_Echo Inputs.txt")
+			val log = zip.getInputStream(entry).readBytes().decodeToString()
+
+			zip.close()
+			file.delete()
+
+			val results = workflowInputsRegex.find(log)
+				?: throw Error("Could not find inputs in workflow log!")
+
+			val (owner, repository, plugin, commit) = results.destructured
+			DispatchInputs(owner, repository, plugin, commit)
+		}
+	}
+
+	@Serializable
+	data class WebhookWorkflowModel(
+		val action: String,
+		val workflow_run: WorkflowRun,
+	)
+
+	@Serializable
+	data class WorkflowRun(
+		val status: String,
+		val conclusion: String,
+		val html_url: String,
+		val logs_url: String,
+	)
 }
+

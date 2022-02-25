@@ -2,9 +2,7 @@ package com.github.redditvanced.routing
 
 import com.github.redditvanced.Config
 import com.github.redditvanced.publishing.ButtonHandler
-import dev.kord.common.entity.ComponentType
-import dev.kord.common.entity.DiscordInteraction
-import dev.kord.common.entity.InteractionResponseType
+import dev.kord.common.entity.*
 import dev.kord.rest.service.RestClient
 import io.ktor.server.application.*
 import io.ktor.server.response.*
