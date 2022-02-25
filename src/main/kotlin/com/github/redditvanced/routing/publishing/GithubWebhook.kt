@@ -127,7 +127,7 @@ fun Route.configureGithubWebhook() {
 
 			with(PluginRepo) {
 				slice(id)
-					.select { owner eq inputs.owner and (repo eq inputs.plugin) }
+					.select { owner eq inputs.owner and (repo eq inputs.repository) }
 					.singleOrNull()
 					?.get(id)
 			}
