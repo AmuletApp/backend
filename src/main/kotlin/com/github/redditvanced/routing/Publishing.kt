@@ -1,13 +1,13 @@
 package com.github.redditvanced.routing
 
-import com.github.redditvanced.Config
+import com.github.redditvanced.*
 import com.github.redditvanced.analytics.PublishingAnalytics
-import com.github.redditvanced.database
 import com.github.redditvanced.database.PluginRepos
 import com.github.redditvanced.database.PublishRequests
 import com.github.redditvanced.publishing.buildRequestButtons
 import com.github.redditvanced.publishing.buildRequestEmbed
 import com.github.redditvanced.utils.GithubUtils
+import com.influxdb.client.domain.WritePrecision
 import dev.kord.rest.service.RestClient
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -33,7 +33,7 @@ object Publishing {
 		val plugin: String,
 	)
 
-	fun Route.configurePublishing() {
+	fun Route.configurePublishing(project: Project) {
 		post<PublishRequestRoute> { data ->
 			// Check for generic plugin names
 			if (data.plugin in bannedPlugins) {
@@ -151,11 +151,14 @@ object Publishing {
 			// Record plugin publishing analytics
 			launch {
 				try {
-					PublishingAnalytics.record(PublishingAnalytics.Publish(
+					val record = PublishingAnalytics.Publish(
 						data.owner,
+						knownCommits == null && existingRequest == null,
 						data.plugin,
-						knownCommits == null && existingRequest == null
-					))
+					)
+					PublishingAnalytics.influx
+						.getWriteKotlinApi()	
+						.writeMeasurement(record, WritePrecision.MS, project.influxBucket)
 				} catch (t: Throwable) {
 					application.log.error("Failed to write publishing analytics: ${t.message}")
 				}

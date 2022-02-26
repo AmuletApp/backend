@@ -1,5 +1,6 @@
 package com.github.redditvanced.routing
 
+import com.github.redditvanced.Project
 import com.github.redditvanced.routing.Discord.configureDiscord
 import com.github.redditvanced.routing.Publishing.configurePublishing
 import io.ktor.http.*
@@ -31,9 +32,9 @@ fun Application.configureRouting() {
 
 	routing {
 		route("/redditvanced") {
-			configureAnalytics("RedditVanced")
+			configureAnalytics(Project.REDDIT_VANCED)
 			configureGoogle()
-			configurePublishing()
+			configurePublishing(Project.REDDIT_VANCED)
 			configureGithubWebhook()
 		}
 		configureDiscord("/redditvanced/discord")

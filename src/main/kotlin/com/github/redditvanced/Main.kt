@@ -32,10 +32,15 @@ fun main() {
 			format { "[${it.request.origin.host}] ${it.request.httpMethod.value} ${it.request.uri} - ${it.response.status()}" }
 		}
 
+		// TODO: separate requests by project
 		install(MicrometerMetrics) {
 			registry = RequestAnalytics.registry
 			meterBinders = emptyList()
 		}
 	}
 	server.start(wait = true)
+}
+
+enum class Project(val influxBucket: String) {
+	REDDIT_VANCED("RedditVanced"),
 }

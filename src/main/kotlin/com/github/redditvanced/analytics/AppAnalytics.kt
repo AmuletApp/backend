@@ -12,7 +12,7 @@ object AppAnalytics {
 	val influx = InfluxDBClientKotlinFactory.create(
 		Config.InfluxDB.url,
 		Config.InfluxDB.token.toCharArray(),
-		"admin",
+		"main",
 	)
 
 	/**

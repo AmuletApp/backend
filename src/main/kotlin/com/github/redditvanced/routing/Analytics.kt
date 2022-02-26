@@ -1,5 +1,6 @@
 package com.github.redditvanced.routing
 
+import com.github.redditvanced.Project
 import com.github.redditvanced.analytics.*
 import com.influxdb.client.domain.WritePrecision
 import io.ktor.server.application.*
@@ -19,28 +20,28 @@ private data class Science(
 )
 
 @OptIn(KtorExperimentalLocationsAPI::class)
-fun Route.configureAnalytics(bucket: String) {
+fun Route.configureAnalytics(project: Project) {
 	post<Science>("/science") { data ->
 		call.respond("")
 
 		launch {
 			PluginAnalytics.influx.getWriteKotlinApi().apply {
 				if (data.pluginLaunches?.isNotEmpty() == true)
-					writeMeasurements(data.pluginLaunches, WritePrecision.MS, bucket)
+					writeMeasurements(data.pluginLaunches, WritePrecision.MS, project.influxBucket)
 				if (data.pluginInstall != null)
-					writeMeasurement(data.pluginInstall, WritePrecision.MS, bucket)
+					writeMeasurement(data.pluginInstall, WritePrecision.MS, project.influxBucket)
 				if (data.pluginUninstall != null)
-					writeMeasurement(data.pluginUninstall, WritePrecision.MS, bucket)
+					writeMeasurement(data.pluginUninstall, WritePrecision.MS, project.influxBucket)
 			}
 			if (data.install != null) {
 				InstallAnalytics.influx
 					.getWriteKotlinApi()
-					.writeMeasurement(data.install, WritePrecision.MS, bucket)
+					.writeMeasurement(data.install, WritePrecision.MS, project.influxBucket)
 			}
 			if (data.appLaunch != null) {
 				AppAnalytics.influx
 					.getWriteKotlinApi()
-					.writeMeasurement(data.appLaunch, WritePrecision.MS, bucket)
+					.writeMeasurement(data.appLaunch, WritePrecision.MS, project.influxBucket)
 			}
 		}
 	}
