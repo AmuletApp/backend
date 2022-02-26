@@ -7,8 +7,6 @@ import io.micrometer.influx.InfluxMeterRegistry
 import java.time.Duration
 
 object RequestAnalytics {
-	// TODO: don't use micrometer
-
 	private val config = object : InfluxConfig {
 		override fun get(key: String) = null
 		override fun bucket() = "Requests"

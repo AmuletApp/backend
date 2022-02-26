@@ -2,8 +2,9 @@ package com.github.redditvanced.routing
 
 import com.github.redditvanced.Config
 import com.github.redditvanced.analytics.PublishingAnalytics
-import com.github.redditvanced.database.PluginRepo
-import com.github.redditvanced.database.PublishRequest
+import com.github.redditvanced.database
+import com.github.redditvanced.database.PluginRepos
+import com.github.redditvanced.database.PublishRequests
 import com.github.redditvanced.modals.respondError
 import com.github.redditvanced.publishing.buildRequestButtons
 import com.github.redditvanced.publishing.buildRequestEmbed
@@ -18,9 +19,9 @@ import io.ktor.server.response.*
 import io.ktor.server.routing.*
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
-import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.SqlExpressionBuilder.plus
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.ktorm.dsl.*
+import org.ktorm.entity.find
+import org.ktorm.entity.sequenceOf
 
 @OptIn(KtorExperimentalLocationsAPI::class)
 object Publishing {
@@ -53,26 +54,22 @@ object Publishing {
 			}
 
 			// Checks if request already exists
-			var existingRequest = transaction {
-				PublishRequest
-					.slice(PublishRequest.id, PublishRequest.messageId, PublishRequest.updates)
-					.select {
-						PublishRequest.owner eq data.owner and
-							(PublishRequest.repo eq data.repository) and
-							(PublishRequest.plugin eq data.plugin)
-					}
-					.singleOrNull()
-			}
+			var existingRequest = database
+				.sequenceOf(PublishRequests)
+				.find {
+					listOf(
+						it.owner eq data.owner,
+						it.repository eq data.repository,
+						it.plugin eq data.plugin
+					).reduce { a, b -> a and b }
+				}
 
 			// Check if request's message still present
 			val existingMessageId = if (existingRequest == null) null else {
-				val requestId = existingRequest[PublishRequest.id]
-
 				// Verify that message exists
-				val messageId = existingRequest[PublishRequest.messageId]
-				val message = if (messageId == null) null else {
+				val message = if (existingRequest.messageId == null) null else {
 					try {
-						rest.channel.getMessage(Config.DiscordServer.publishingChannel, Snowflake(messageId))
+						rest.channel.getMessage(Config.DiscordServer.publishingChannel, Snowflake(existingRequest.messageId!!))
 					} catch (t: Throwable) {
 						null
 					}
@@ -80,34 +77,34 @@ object Publishing {
 
 				// Delete request if message gone
 				// This will go on to generate a new request
-				if (message == null) transaction {
-					PublishRequest.deleteWhere { PublishRequest.id eq requestId }
+				if (message == null) {
+					database.delete(PublishRequests) { it.id eq existingRequest!!.id }
 					existingRequest = null
 					null
 				} else {
 					// Update the target commit to approve in DB and increment updates counter
-					transaction {
-						PublishRequest.update({ PublishRequest.id eq requestId }) {
-							it[targetCommit] = commit
-							it[updates] = updates + 1
-						}
+					database.update(PublishRequests) {
+						set(it.targetCommit, commit)
+						set(it.updates, it.updates + 1)
+						where { it.id eq existingRequest.id }
 					}
-					messageId
+					existingRequest.messageId
 				}
 			}
 
 			// Get all existing approved commits (if any, repo might not be registered)
-			val knownCommits = transaction {
-				PluginRepo
-					.slice(PluginRepo.approvedCommits)
-					.select {
-						PluginRepo.owner eq data.owner and
-							(PluginRepo.repo eq data.repository)
-					}
-					.singleOrNull()
-					?.get(PluginRepo.approvedCommits)
-					?.split(',')
-			}
+			val knownCommits = database
+				.from(PluginRepos)
+				.select(PluginRepos.approvedCommits)
+				.whereWithConditions {
+					it += PluginRepos.owner eq data.owner
+					it += PluginRepos.repository eq data.repository
+				}
+				.rowSet.use {
+					if (it.first())
+						it[PluginRepos.approvedCommits]
+					else null
+				}
 
 			// Get the most recent approved commit to compare against
 			val lastApprovedCommit = knownCommits?.first()
@@ -119,14 +116,12 @@ object Publishing {
 
 			val messageId = if (existingMessageId == null) {
 				// Add request to DB and return the new ID
-				val newRequestId = transaction {
-					PublishRequest.insertAndGetId {
-						it[owner] = data.owner
-						it[repo] = data.repository
-						it[plugin] = data.plugin
-						it[targetCommit] = commit
-					}.value
-				}
+				val newRequestId = database.insertAndGenerateKey(PublishRequests) {
+					set(it.owner, data.owner)
+					set(it.repository, data.repository)
+					set(it.plugin, data.plugin)
+					set(it.targetCommit, commit)
+				} as Int
 
 				// Send new publish request message
 				val message = rest.channel.createMessage(Config.DiscordServer.publishingChannel) {
@@ -136,10 +131,9 @@ object Publishing {
 				}
 
 				// Update request record to add message id
-				transaction {
-					PublishRequest.update({ PublishRequest.id eq newRequestId }) {
-						it[messageId] = message.id.value.toLong()
-					}
+				database.update(PublishRequests) {
+					set(it.messageId, message.id.value.toLong())
+					where { it.id eq newRequestId }
 				}
 				message.id.value
 			} else {
@@ -148,7 +142,7 @@ object Publishing {
 					embeds = mutableListOf(buildRequestEmbed(
 						data,
 						commit,
-						existingRequest!![PublishRequest.updates] + 1,
+						existingRequest!!.updates + 1,
 						lastApprovedCommit,
 						lastSharedCommit
 					))

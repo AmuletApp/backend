@@ -28,14 +28,12 @@ repositories {
 }
 
 dependencies {
-	val ktorVersion: String by project
-	val logbackVersion: String by project
-	val exposedVersion: String by project
+	val ktorVersion = "2.0.0-beta-1"
 
-	// Ktor & logging
+	// Ktor Server
 	implementation("io.ktor:ktor-server-core:$ktorVersion")
 	implementation("io.ktor:ktor-server-netty:$ktorVersion")
-	implementation("ch.qos.logback:logback-classic:$logbackVersion")
+	implementation("ch.qos.logback:logback-classic:1.2.10")
 
 	// Ktor plugins
 	implementation("io.ktor:ktor-server-locations:$ktorVersion")
@@ -45,20 +43,15 @@ dependencies {
 	implementation("io.ktor:ktor-server-content-negotiation:$ktorVersion")
 	implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
 
-	// TODO: remove
+	// TODO: make custom request analytics
+	// Ktor request analytics
 	implementation("io.ktor:ktor-server-metrics-micrometer:$ktorVersion")
 	implementation("io.micrometer:micrometer-registry-influx:1.8.2")
 
 	// Database
-	implementation("org.jetbrains.exposed:exposed-core:$exposedVersion")
-	implementation("org.jetbrains.exposed:exposed-dao:$exposedVersion")
-	implementation("org.jetbrains.exposed:exposed-jdbc:$exposedVersion")
-	implementation("org.jetbrains.exposed:exposed-java-time:$exposedVersion")
 	implementation("org.xerial:sqlite-jdbc:3.36.0.3")
-
-	// Migrations
-	implementation("gay.solonovamax:exposed-migrations:4.0.1")
-	implementation("ca.solo-studios:slf4k:0.4.6")
+	implementation("org.ktorm:ktorm-core:3.4.1")
+	implementation("org.flywaydb:flyway-core:8.5.1")
 
 	// GPlay API
 	implementation("com.github.theapache64:google-play-api:0.0.9")

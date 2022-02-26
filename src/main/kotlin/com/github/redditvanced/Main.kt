@@ -1,29 +1,28 @@
 package com.github.redditvanced
 
 import com.github.redditvanced.analytics.RequestAnalytics
-import com.github.redditvanced.migrations.M001_Publishing
 import com.github.redditvanced.routing.configureRouting
-import gay.solonovamax.exposed.migrations.runMigrations
 import io.ktor.server.application.*
 import io.ktor.server.engine.*
 import io.ktor.server.metrics.micrometer.*
 import io.ktor.server.netty.*
 import io.ktor.server.plugins.*
 import io.ktor.server.request.*
-import org.jetbrains.exposed.sql.Database
-import org.jetbrains.exposed.sql.exposedLogger
+import org.flywaydb.core.Flyway
+import org.ktorm.database.Database
 import org.slf4j.event.Level
+
+lateinit var database: Database
 
 fun main() {
 	Config.init()
 
-	val database = Database.connect("jdbc:sqlite:./data.db")
-	runMigrations(listOf(M001_Publishing()))
-
-	Runtime.getRuntime().addShutdownHook(Thread {
-		exposedLogger.info("Shutting down...")
-		database.connector().close()
-	})
+	val dbUrl = "jdbc:sqlite:./data.db"
+	Flyway.configure()
+		.dataSource(dbUrl, null, null)
+		.load()
+		.migrate()
+	database = Database.connect(dbUrl)
 
 	val server = embeddedServer(Netty, Config.port, "127.0.0.1") {
 		configureRouting()

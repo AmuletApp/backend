@@ -1,13 +1,15 @@
 package com.github.redditvanced.publishing
 
 import com.github.redditvanced.Config
-import com.github.redditvanced.database.PublishRequest
+import com.github.redditvanced.database
+import com.github.redditvanced.database.PublishRequests
 import com.github.redditvanced.utils.GithubUtils
 import com.github.redditvanced.utils.toBuilder
 import net.perfectdreams.discordinteraktions.common.components.ComponentContext
 import net.perfectdreams.discordinteraktions.common.components.GuildComponentContext
-import org.jetbrains.exposed.sql.select
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.ktorm.dsl.eq
+import org.ktorm.entity.find
+import org.ktorm.entity.sequenceOf
 import org.slf4j.LoggerFactory
 
 object ButtonHandler {
@@ -49,11 +51,9 @@ object ButtonHandler {
 		}
 
 		// Get plugin request details
-		val publishRequest = transaction {
-			PublishRequest
-				.select { PublishRequest.id eq requestId }
-				.singleOrNull()
-		}
+		val publishRequest = database
+			.sequenceOf(PublishRequests)
+			.find { it.id eq requestId }
 
 		// Verify request record still exists
 		if (publishRequest == null) {
@@ -65,10 +65,10 @@ object ButtonHandler {
 
 		// Trigger GitHub workflow
 		val inputs = GithubUtils.DispatchInputs(
-			publishRequest[PublishRequest.owner],
-			publishRequest[PublishRequest.repo],
-			publishRequest[PublishRequest.plugin],
-			publishRequest[PublishRequest.targetCommit]
+			publishRequest.owner,
+			publishRequest.repository,
+			publishRequest.plugin,
+			publishRequest.targetCommit
 		)
 		try {
 			GithubUtils.triggerPluginBuild(inputs)

@@ -1,15 +1,17 @@
 package com.github.redditvanced.publishing
 
 import com.github.redditvanced.Config
-import com.github.redditvanced.database.PluginRepo
-import com.github.redditvanced.database.PublishRequest
+import com.github.redditvanced.database
+import com.github.redditvanced.database.PluginRepos
+import com.github.redditvanced.database.PublishRequests
 import com.github.redditvanced.routing.Discord
 import com.github.redditvanced.routing.Publishing
 import com.github.redditvanced.utils.GithubUtils
 import com.github.redditvanced.utils.toBuilder
 import dev.kord.common.entity.Snowflake
-import org.jetbrains.exposed.sql.*
-import org.jetbrains.exposed.sql.transactions.transaction
+import org.ktorm.dsl.*
+import org.ktorm.entity.find
+import org.ktorm.entity.sequenceOf
 import org.slf4j.LoggerFactory
 
 object GithubWebhookHandler {
@@ -31,18 +33,19 @@ object GithubWebhookHandler {
 			return
 
 		// Fetch publish request, check exists
-		val publishRequest = transaction {
-			PublishRequest.select {
-				PublishRequest.owner eq inputs.owner and
-					(PublishRequest.repo eq inputs.repository) and
-					(PublishRequest.plugin eq inputs.plugin)
-			}.singleOrNull()
-		} ?: return
+		val publishRequest = database
+			.sequenceOf(PublishRequests)
+			.find {
+				listOf(
+					it.owner eq inputs.owner,
+					it.repository eq inputs.repository,
+					it.plugin eq inputs.plugin
+				).reduce { a, b -> a and b }
+			} ?: return
 
-		val publishRequestId = publishRequest[PublishRequest.id].value
-
+		// TODO: handle this
 		// Check MessageId present on publish request
-		val messageId = publishRequest[PublishRequest.messageId]
+		val messageId = publishRequest.messageId
 			?: return
 
 		// Check Discord message still exists
@@ -53,7 +56,7 @@ object GithubWebhookHandler {
 			)
 		} catch (t: Throwable) {
 			// Delete request if message gone
-			transaction { PublishRequest.deleteById(publishRequestId) }
+			database.delete(PublishRequests) { it.id eq publishRequest.id }
 			return
 		}
 
@@ -64,7 +67,7 @@ object GithubWebhookHandler {
 				when (workflowConclusion) {
 					"failure" -> {
 						content = "**Build failure**\n<${data.workflow_run.html_url}>"
-						components = mutableListOf(buildRequestButtons(publishRequestId, false))
+						components = mutableListOf(buildRequestButtons(publishRequest.id, false))
 						embed.color = Config.Colors.RED
 					}
 					"success" -> {
@@ -85,31 +88,19 @@ object GithubWebhookHandler {
 		if (workflowConclusion != "success")
 			return
 
-		// Update approved commits & delete request
-		val repoId = transaction {
-			PublishRequest.deleteById(publishRequestId)
-
-			with(PluginRepo) {
-				slice(id)
-					.select { owner eq inputs.owner and (repo eq inputs.repository) }
-					.singleOrNull()
-					?.get(id)
-			}
-		}
+		// Delete completed publish request
+		database.delete(PublishRequests) { it.id eq publishRequest.id }
 
 		val (commits) = GithubUtils.getCommits(inputs.owner, inputs.repository, 100)
-		transaction {
-			if (repoId != null) {
-				PluginRepo.update({ PluginRepo.id eq repoId }) {
-					it[approvedCommits] = commits.joinToString(",")
-				}
-			} else {
-				PluginRepo.insert {
-					it[owner] = inputs.owner
-					it[repo] = inputs.repository
-					it[approvedCommits] = commits.joinToString(",")
-				}
-			}
+		val rowsAffected = database.update(PluginRepos) {
+			set(it.approvedCommits, commits)
+			where { (it.owner eq inputs.owner) and (it.repository eq inputs.repository) }
+		}
+
+		if (rowsAffected == 0) database.insert(PluginRepos) {
+			set(it.owner, inputs.owner)
+			set(it.repository, inputs.repository)
+			set(it.approvedCommits, commits)
 		}
 	}
 }
