@@ -52,7 +52,7 @@ object GithubWebhookHandler {
 		val message = try {
 			Discord.rest.channel.getMessage(
 				Config.DiscordServer.publishingChannel,
-				Snowflake(messageId)
+				messageId
 			)
 		} catch (t: Throwable) {
 			// Delete request if message gone
@@ -62,7 +62,7 @@ object GithubWebhookHandler {
 
 		// Update Discord message
 		try {
-			Publishing.rest.channel.editMessage(Config.DiscordServer.publishingChannel, Snowflake(messageId)) {
+			Publishing.rest.channel.editMessage(Config.DiscordServer.publishingChannel, messageId) {
 				val embed = message.embeds.single().toBuilder()
 				when (workflowConclusion) {
 					"failure" -> {

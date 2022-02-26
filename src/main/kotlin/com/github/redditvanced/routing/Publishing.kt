@@ -8,7 +8,6 @@ import com.github.redditvanced.database.PublishRequests
 import com.github.redditvanced.publishing.buildRequestButtons
 import com.github.redditvanced.publishing.buildRequestEmbed
 import com.github.redditvanced.utils.GithubUtils
-import dev.kord.common.entity.Snowflake
 import dev.kord.rest.service.RestClient
 import io.ktor.http.*
 import io.ktor.server.application.*
@@ -68,7 +67,7 @@ object Publishing {
 				// Verify that message exists
 				val message = if (existingRequest.messageId == null) null else {
 					try {
-						rest.channel.getMessage(Config.DiscordServer.publishingChannel, Snowflake(existingRequest.messageId!!))
+						rest.channel.getMessage(Config.DiscordServer.publishingChannel, existingRequest.messageId!!)
 					} catch (t: Throwable) {
 						null
 					}
@@ -131,13 +130,13 @@ object Publishing {
 
 				// Update request record to add message id
 				database.update(PublishRequests) {
-					set(it.messageId, message.id.value.toLong())
+					set(it.messageId, message.id)
 					where { it.id eq newRequestId }
 				}
 				message.id.value
 			} else {
 				// Edit the existing publish request message with new details
-				rest.channel.editMessage(Config.DiscordServer.publishingChannel, Snowflake(existingMessageId)) {
+				rest.channel.editMessage(Config.DiscordServer.publishingChannel, existingMessageId) {
 					embeds = mutableListOf(buildRequestEmbed(
 						data,
 						commit,

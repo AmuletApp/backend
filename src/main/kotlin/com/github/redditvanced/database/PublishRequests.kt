@@ -1,5 +1,6 @@
 package com.github.redditvanced.database
 
+import dev.kord.common.entity.Snowflake
 import org.ktorm.entity.Entity
 import org.ktorm.schema.*
 
@@ -9,7 +10,7 @@ interface PublishRequest : Entity<PublishRequest> {
 	val repository: String
 	val plugin: String
 	val targetCommit: String
-	val messageId: Long?
+	val messageId: Snowflake?
 	val updates: Int
 }
 
@@ -30,8 +31,7 @@ object PublishRequests : Table<PublishRequest>("publish_requests") {
 	var targetCommit = varchar("target_commit")
 		.bindTo { it.targetCommit }
 
-	// TODO: snowflake parser
-	var messageId = long("message_id")
+	var messageId = snowflake("message_id")
 		.bindTo { it.messageId }
 
 	var updates = int("updates")
