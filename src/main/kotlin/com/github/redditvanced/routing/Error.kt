@@ -1,4 +1,4 @@
-package com.github.redditvanced.modals
+package com.github.redditvanced.routing
 
 import io.ktor.http.*
 import io.ktor.server.application.*

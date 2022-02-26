@@ -5,7 +5,6 @@ import com.github.redditvanced.analytics.PublishingAnalytics
 import com.github.redditvanced.database
 import com.github.redditvanced.database.PluginRepos
 import com.github.redditvanced.database.PublishRequests
-import com.github.redditvanced.modals.respondError
 import com.github.redditvanced.publishing.buildRequestButtons
 import com.github.redditvanced.publishing.buildRequestEmbed
 import com.github.redditvanced.utils.GithubUtils

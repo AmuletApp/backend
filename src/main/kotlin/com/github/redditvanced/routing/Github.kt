@@ -1,7 +1,6 @@
-package com.github.redditvanced.routing.publishing
+package com.github.redditvanced.routing
 
 import com.github.redditvanced.Config
-import com.github.redditvanced.modals.respondError
 import com.github.redditvanced.publishing.GithubWebhookHandler
 import com.github.redditvanced.utils.GithubUtils
 import io.ktor.http.*

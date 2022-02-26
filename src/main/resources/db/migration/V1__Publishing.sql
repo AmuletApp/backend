@@ -11,8 +11,8 @@ CREATE TABLE publish_requests
 
 CREATE TABLE plugin_repositories
 (
-	id              INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-	owner           TEXT    NOT NULL,
-	repository      TEXT    NOT NULL,
+	id               INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+	owner            TEXT    NOT NULL,
+	repository       TEXT    NOT NULL,
 	approved_commits TEXT    NOT NULL
 )
